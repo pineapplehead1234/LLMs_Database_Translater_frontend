@@ -37,7 +37,7 @@ async function upload() {
     form.append('targetLang', 'zh')
     form.append('clientRequestId', file.value.name) // MVP：用文件名当 id
 
-    const res = await fetch('http://localhost:8000/api/document/upload', {
+    const res = await fetch('/apiA/api/document/upload', {
       method: 'POST',
       body: form
     })
