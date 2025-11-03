@@ -1,35 +1,29 @@
 @import './base.css';
 
+/* 根节点铺满视口 */
+html, body, #app { height: 100%; margin: 0; }
+
+/* 用列式 Flex 作为页面骨架（头-体-尾），并保证最小高度为视口高 */
 #app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  font-weight: normal;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  /* 不要再限制 max-width/margin 居中，否则会挤压布局 */
 }
 
-a,
-.green {
-  text-decoration: none;
-  color: hsla(160, 100%, 37%, 1);
-  transition: 0.4s;
-  padding: 3px;
+
+/* 类型A：填满父容器并允许上下滚动 */
+.fill {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  overflow: auto;
+  scrollbar-gutter: stable;
 }
 
-@media (hover: hover) {
-  a:hover {
-    background-color: hsla(160, 100%, 37%, 0.2);
-  }
+/* 类型B：宽度自适应（常用于工具条等） */
+.full-width {
+  width: 100%;
 }
-
-@media (min-width: 1024px) {
-  body {
-    display: flex;
-    place-items: center;
-  }
-
-  #app {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    padding: 0 2rem;
-  }
-}
+/* 去掉会干扰整体布局的响应式居中和 Grid 规则 */
+/* @media (min-width: 1024px) { ... } 可删除或仅保留你确实需要的页面级样式 */
