@@ -1,90 +1,283 @@
 <template>
-  <div class="content-area">
-    <input type="file" multiple @change="onFileChange" accept=".pdf,.docx,.md" />
-    <button :disabled="!files.length || loading" @click="upload">
-      上传并翻译({{ files.length }})
-    </button>
-    <div v-if="loading" style="margin-top: 12px">上传中...</div>
-    <div v-if="resp" style="margin-top: 16px">
-      <h3>响应</h3>
-      <pre style="background: black; padding: 12px; overflow: auto">{{ resp }}</pre>
+  <!-- 控制区：模式 + 保存到 -->
+  <div class="controls">
+    <!-- 模式：按钮式单选 -->
+    <el-radio-group v-model="strategy" size="default" class="mode-group">
+      <el-radio-button label="normal">标准</el-radio-button>
+      <el-radio-button label="precise">精准</el-radio-button>
+      <el-radio-button label="fast">极速</el-radio-button>
+    </el-radio-group>
+
+    <!-- 保存到：按钮 + 弹出树 -->
+    <el-popover
+      placement="bottom-start"
+      width="260"
+      v-model:visible="folderPickerVisible"
+      :teleported="false"
+    >
+      <template #reference>
+        <el-button size="small" class="folder-trigger" @click="folderPickerVisible = true">
+          <el-icon style="margin-right: 6px"><Folder /></el-icon>
+          保存到：{{ selectedFolderLabel }}
+          <el-icon style="margin-left: 6px"><ArrowDown /></el-icon>
+        </el-button>
+      </template>
+
+      <div style="max-height: 240px; overflow: auto; padding-right: 4px">
+        <el-tree
+          :data="folderTreeData"
+          node-key="id"
+          default-expand-all
+          highlight-current
+          :expand-on-click-node="false"
+          @current-change="onSelectFolder"
+        />
+      </div>
+    </el-popover>
+  </div>
+
+  <el-upload
+    class="upload-area"
+    drag
+    multiple
+    :auto-upload="false"
+    :file-list="elFilelist"
+    :on-change="onElChange"
+    :on-remove="onElRemove"
+    :show-file-list="false"
+  >
+    <div class="upload-text">拖拽文件到这里或点击上传</div>
+    <template #tip>
+      <div class="el-upload__tip">支持 .pdf / .docx / .md</div>
+    </template>
+  </el-upload>
+
+  <el-scrollbar v-if="filesWithStatus.length" class="file-list">
+    <div
+      class="file-row"
+      v-for="fileItem in filesWithStatus"
+      :key="fileItem.file.name + fileItem.file.size"
+    >
+      <div class="file-name">📄 {{ fileItem.file.name }}</div>
+      <el-tag size="small" :type="getStatusType(fileItem.status)" class="file-status">
+        {{ getStatusText(fileItem.status) }}
+      </el-tag>
     </div>
+  </el-scrollbar>
+
+  <div class="upload-actions" v-if="filesWithStatus.length">
+    <el-button
+      type="primary"
+      @click="upload"
+      :loading="loading"
+      :disabled="loading || filesWithStatus.length === 0"
+    >
+      {{ loading ? "上传中..." : "开始上传" }}
+    </el-button>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from "vue";
+import { API_ENDPOINTS, IS_MOCK } from "@/api/config";
+import { Folder, ArrowDown } from "@element-plus/icons-vue";
+import type { UploadFile } from "element-plus";
 
+import { useTranslationStore } from "@/stores/translationStore";
+// 文件上传相关
+const elFilelist = ref<UploadFile[]>([]);
 const files = ref<File[]>([]);
 const loading = ref(false);
-const resp = ref<string>("");
 
-function onFileChange(e: Event) {
-  const input = e.target as HTMLInputElement;
-  files.value = input.files ? Array.from(input.files) : [];
+const store = useTranslationStore();
+
+// 策略选择（翻译模式）
+const strategy = ref<"normal" | "precise" | "fast">("normal");
+
+// 文件夹选择相关
+const folderPickerVisible = ref(false);
+const selectedFolderId = ref<string | null>(null);
+const selectedFolderLabel = ref<string>("根目录");
+
+// 文件夹树数据类型
+type TreeNode = {
+  id: string;
+  name: string;
+  children?: TreeNode[];
+};
+
+// 文件夹树数据
+const folderTreeData = ref<TreeNode[]>([
+  {
+    id: "root",
+    name: "根目录",
+    children: [
+      { id: "docs", name: "docs" },
+      { id: "uploads", name: "uploads" },
+    ],
+  },
+]);
+
+// 文件状态类型
+type FileStatus = "waiting" | "uploading" | "processing" | "completed" | "error";
+
+// 带状态的文件类型
+type FileWithStatus = {
+  file: File;
+  status: FileStatus;
+  taskId?: string;
+  error?: string;
+};
+
+const filesWithStatus = ref<FileWithStatus[]>([]);
+
+// 文件夹选择处理
+function onSelectFolder(node: TreeNode | null) {
+  if (!node) {
+    selectedFolderId.value = null;
+    selectedFolderLabel.value = "根目录";
+  } else {
+    selectedFolderId.value = node.id;
+    selectedFolderLabel.value = node.name;
+    folderPickerVisible.value = false;
+  }
 }
 
-async function upload() {
-  if (!files.value || files.value.length === 0) return;
-  loading.value = true;
-  resp.value = "";
-  
-  // 遍历每个文件，逐个上传
-  for (let i = 0; i < files.value.length; i++) {
-    const file = files.value[i];  // 👈 取出单个文件
-    if (!file) continue;  // 跳过 undefined（虽然实际不会发生）
-    resp.value += `\n[${i + 1}/${files.value.length}] 正在上传: ${file.name}\n`;
-    
-    try {
-      // ====== 第1步：上传单个文件，获取 taskId ======
-      const form = new FormData();
-      form.append("file", file);  // 👈 单个文件
-      form.append("target_lang", "ch");
-      form.append("strategy", "normal");
-      form.append("client_request_id", file.name);  // 👈 单个文件的名字
+// 文件变更处理
+function onElChange(_file: UploadFile, fileList: UploadFile[]) {
+  elFilelist.value = fileList;
+  const rawFiles = fileList.map((f) => f.raw).filter(Boolean) as File[];
+  files.value = rawFiles;
+  filesWithStatus.value = rawFiles.map((file) => ({
+    file,
+    status: "waiting" as FileStatus,
+  }));
+}
 
-      const uploadRes = await fetch("/apiA/api/task/upload", {
+function onElRemove(_file: UploadFile, fileList: UploadFile[]) {
+  elFilelist.value = fileList;
+  const rawFiles = fileList.map((f) => f.raw).filter(Boolean) as File[];
+  files.value = rawFiles;
+  filesWithStatus.value = rawFiles.map((file) => ({
+    file,
+    status: "waiting" as FileStatus,
+  }));
+}
+
+// 获取状态文本
+function getStatusText(status: FileStatus): string {
+  const statusMap: Record<FileStatus, string> = {
+    waiting: "等待上传",
+    uploading: "上传中",
+    processing: "处理中",
+    completed: "已完成",
+    error: "错误",
+  };
+  return statusMap[status] || "未知";
+}
+
+// 获取状态标签类型
+function getStatusType(status: FileStatus): "info" | "warning" | "success" | "danger" {
+  const typeMap: Record<FileStatus, "info" | "warning" | "success" | "danger"> = {
+    waiting: "info",
+    uploading: "warning",
+    processing: "warning",
+    completed: "success",
+    error: "danger",
+  };
+  return typeMap[status] || "info";
+}
+
+// 上传函数
+async function upload() {
+  if (!filesWithStatus.value || filesWithStatus.value.length === 0) return;
+  loading.value = true;
+
+  for (let i = 0; i < filesWithStatus.value.length; i++) {
+    const fileItem = filesWithStatus.value[i];
+    if (!fileItem) continue;
+
+    const file = fileItem.file;
+    fileItem.status = "uploading";
+
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      form.append("target_lang", "ch");
+      form.append("strategy", strategy.value);
+      form.append("client_request_id", file.name);
+
+      const uploadRes = await fetch(API_ENDPOINTS.UPLOAD, {
         method: "POST",
         body: form,
       });
-      const uploadData = await uploadRes.json();
-      
-      if (uploadData.status !== "success") {
-        resp.value += `  ❌ ${file.name} 上传失败\n`;
-        continue;  // 👈 继续下一个文件
+
+      if (!uploadRes.ok) {
+        throw new Error(`上传失败: ${uploadRes.statusText}`);
       }
-      
+
+      const uploadData = await uploadRes.json();
+
+      if (uploadData.status !== "success") {
+        fileItem.status = "error";
+        fileItem.error = uploadData.error || "上传失败";
+        continue;
+      }
+
       const taskId = uploadData.taskId;
-      resp.value += `  ✅ ${file.name} 已提交，ID: ${taskId}\n`;
-      
-      // ====== 第2步：查询进度（SSE） ======
-      // 选项A：等待每个文件翻译完成再上传下一个
-      resp.value += `  ⏳ 正在翻译 ${file.name}...\n`;
-      await queryTaskProgress(taskId);
-      
-      // 选项B：只上传不等待（更快，但不知道进度）
-      // resp.value += `  ⏳ ${file.name} 正在后台翻译...\n`;
-      
+      fileItem.taskId = taskId;
+      fileItem.status = "processing";
+
+      await queryTaskProgress(taskId, fileItem);
     } catch (e) {
+      fileItem.status = "error";
       const getErrorMessage = (error: unknown): string =>
         error instanceof Error ? error.message : String(error);
-      resp.value += `  ❌ ${file.name} 请求失败: ${getErrorMessage(e)}\n`;
+      fileItem.error = getErrorMessage(e);
     }
   }
-  
-  loading.value = false;
-  resp.value += `\n✨ 所有文件处理完成！\n`;
-}
-async function queryTaskProgress(taskId: string) {
-  // 使用 fetch 接收 SSE 流
-  const response = await fetch(`/apiA/api/task/query?taskId=${taskId}`);
 
-  if (!response.body) {
-    resp.value = "无法获取响应流";
+  loading.value = false;
+}
+
+// 查询任务进度
+async function queryTaskProgress(taskId: string, fileItem: FileWithStatus) {
+  if (IS_MOCK) {
+    const response = await fetch(`${API_ENDPOINTS.QUERY}?taskId=${taskId}`);
+
+    if (!response.ok) {
+      fileItem.status = "error";
+      fileItem.error = `查询失败: ${response.statusText}`;
+      return;
+    }
+
+    const data = await response.json();
+
+    if (data.status === "success") {
+      fileItem.status = "completed";
+      store.setCurrentFile({
+        fileId: data.fileId,
+        originalMarkdown: data.originalMarkdown,
+        translatedMarkdown: data.translatedMarkdown,
+        termAnnotations: data.termAnnotations || [],
+      });
+    } else if (data.status === "error") {
+      fileItem.status = "error";
+      fileItem.error = data.error;
+    } else {
+      fileItem.status = "processing";
+    }
     return;
   }
 
-  // 创建一个读取器来读取流数据
+  const response = await fetch(`${API_ENDPOINTS.QUERY}?taskId=${taskId}`);
+
+  if (!response.body) {
+    fileItem.status = "error";
+    fileItem.error = "无法获取响应流";
+    return;
+  }
+
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
 
@@ -92,32 +285,30 @@ async function queryTaskProgress(taskId: string) {
     const { done, value } = await reader.read();
 
     if (done) {
-      break; // 流结束
+      break;
     }
 
-    // 解码收到的数据
     const text = decoder.decode(value);
     console.log("收到数据:", text);
 
     try {
-      // 把字符串转成对象
       const data = JSON.parse(text);
 
       if (data.status === "success") {
-        // 👈 翻译完成！
-        resp.value = `翻译完成！\n\n原文:\n${JSON.stringify(
-          data.originalMarkdown,
-          null,
-          2
-        )}\n\n译文:\n${JSON.stringify(data.translatedMarkdown, null, 2)}`;
+        fileItem.status = "completed";
+        store.setCurrentFile({
+          fileId: data.fileId,
+          originalMarkdown: data.originalMarkdown,
+          translatedMarkdown: data.translatedMarkdown,
+          termAnnotations: data.termAnnotations || [],
+        });
         break;
       } else if (data.status === "error") {
-        // 👈 出错了
-        resp.value = `错误: ${data.error}`;
+        fileItem.status = "error";
+        fileItem.error = data.error;
         break;
       } else {
-        // 👈 还在处理中
-        resp.value = `任务状态: ${data.status}`;
+        fileItem.status = "processing";
       }
     } catch (e) {
       console.error("解析数据失败:", e, text);
@@ -127,8 +318,60 @@ async function queryTaskProgress(taskId: string) {
 </script>
 
 <style scoped>
-.content-area {
-  padding: 16px;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+/* 拖拽上传区域外观（卡片 + 虚线边框） */
+.upload-area {
+  border: 1px dashed #3a3a3a;
+  background: #1a1a1a;
+  padding: 8px 0;
+}
+
+.upload-text {
+  font-size: 14px;
+  text-align: center;
+  background: #1a1a1a;
+}
+
+.file-row {
+  display: flex;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.file-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-status {
+  margin-left: auto;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+  margin-bottom: 12px;
+}
+
+.mode-group :deep(.el-radio-button__inner) {
+  padding: 4px 10px;
+}
+
+.folder-trigger {
+  --el-button-bg-color: #1f1f1f;
+}
+
+.upload-actions {
+  margin-top: 12px;
+  display: flex;
+  justify-content: center;
+}
+
+.file-list {
+  max-height: 200px;
+  margin-top: 12px;
 }
 </style>
