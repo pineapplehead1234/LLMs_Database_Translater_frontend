@@ -40,7 +40,9 @@
 
         <div class="dual-pane">
           <!-- 原文区：自动填充剩余空间 -->
-          <OriginalPanel />
+          <div class="original-wrapper">
+            <OriginalPanel />
+          </div>
 
           <!-- 内部分隔条（可拖动） -->
           <div class="inner-resizer" @mousedown="startResize('translated', $event)"></div>
@@ -106,7 +108,7 @@ function handleResize(event: MouseEvent) {
   const deltaX = event.clientX - startX.value;
   // delta 换算成 vw（百分比宽度）
   const deltaVw = (deltaX / window.innerWidth) * 100;
-  const minWidth = 8;  // 最小宽度（vw）
+  const minWidth = 8; // 最小宽度（vw）
   const maxWidth = 80; // 最大宽度（vw）
 
   if (resizingTarget.value === "sidebar") {
@@ -139,6 +141,7 @@ function stopResize() {
   margin: 0;
   padding: 0;
   background-color: red;
+  overflow: hidden;
 }
 
 .app-header {
@@ -175,7 +178,9 @@ function stopResize() {
   height: 100%;
   z-index: 5;
 }
-.resizer:hover { background: #007acc; }
+.resizer:hover {
+  background: #007acc;
+}
 
 /* 工作区：占剩余宽度 */
 .workbench {
@@ -202,15 +207,11 @@ function stopResize() {
   min-height: 0; /* 必须：让子滚动条正常工作 */
   min-width: 0;
 }
-
-/* 原文区：自动填充剩余空间并可滚动 */
-.original-panel {
-  flex: 1;
-  min-width: 0; /* 必须：防止内容撑破布局 */
-  background: #1e1e1e;
-  overflow: auto;
-  padding: 16px;
-  color: #fff;
+.original-wrapper {
+ flex: 1 1 auto;
+ min-width: 200px;
+ display: flex;
+ overflow: hidden;
 }
 
 /* 内部分隔条（译文区左侧） */
@@ -223,14 +224,16 @@ function stopResize() {
   height: 100%;
   z-index: 6; /* 保证在内容之上 */
 }
-.inner-resizer:hover { background: #007acc; }
+.inner-resizer:hover {
+  background: #007acc;
+}
 
 /* 译文区：固定由绑定的宽度控制 */
 /* 译文区外层容器：固定由绑定的宽度控制 */
 .translated-wrapper {
   flex-shrink: 0;
   min-width: 0;
-  overflow: hidden;  /* 改为hidden，让内部组件处理滚动 */
+  overflow: hidden; /* 改为hidden，让内部组件处理滚动 */
 }
 
 /* 其余样式略过（保持你原来的） */
@@ -252,9 +255,29 @@ function stopResize() {
   font-size: 14px;
   transition: all 0.2s;
 }
-.nav-btn:hover { background: #333; color: #fff; }
+.nav-btn:hover {
+  background: #333;
+  color: #fff;
+}
 
-.file-content { flex: 1; display: flex; flex-direction: column; min-height: 0; }
-.file-upload-panel { flex: 1; min-height: 0; overflow: hidden; display:flex; flex-direction:column; }
-.file-tree { flex: 1; min-height: 0; overflow: hidden; display:flex; flex-direction:column; }
+.file-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.file-upload-panel {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.file-tree {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
 </style>

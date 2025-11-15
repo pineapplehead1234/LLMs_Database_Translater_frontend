@@ -1,0 +1,226 @@
+openapi: 3.0.3
+info:
+  title: 翻译应用 API
+  version: 1.0.0
+  description: 翻译应用 API 接口文档 - MVP版本
+servers:
+  - url: http://localhost:8000
+    description: 开发环境
+paths:
+  /api/task/upload:
+    post:
+      summary: 上传文件并启动异步翻译任务
+      description: 支持 PDF, DOCX, Markdown (.md) 格式
+      tags:
+        - 文件上传
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: 上传的文件
+                targetLang:
+                  type: string
+                  default: ch
+                  description: 目标语言（默认 'ch'）
+                strategy:
+                  type: string
+                  enum: [fast, normal, thinking]
+                  default: normal
+                  description: 翻译策略
+                clientRequestId:
+                  type: string
+                  description: 客户端请求ID（可选）
+      responses:
+        '200':
+          description: 上传成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadResponse'
+              examples:
+                success:
+                  value:
+                    status: success
+                    taskId: "task_123_456789"
+                error:
+                  value:
+                    status: error
+                    error: "文件大小超过限制"
+  /api/task/query:
+    get:
+      summary: 查询翻译任务状态和结果
+      description: 通过 taskId 查询任务状态，支持轮询
+      tags:
+        - 任务查询
+      parameters:
+        - name: taskId
+          in: query
+          required: true
+          schema:
+            type: string
+          description: 任务ID
+      responses:
+        '200':
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/TaskQueryResponsePending'
+                  - $ref: '#/components/schemas/TaskQueryResponseCompleted'
+              examples:
+                pending:
+                  value:
+                    status: pending
+                    error: null
+                processing:
+                  value:
+                    status: processing
+                success:
+                  value:
+                    fileId: "task_123_456789"
+                    status: success
+                    originalMarkdown:
+                      "1": "# Machine Learning\n\nML is important."
+                      "2": "![Diagram](./images/ml.png)"
+                    translatedMarkdown:
+                      "1": "# 机器学习\n\n机器学习很重要。"
+                      "2": "![Diagram](./images/ml.png)"
+                    termAnnotations:
+                      - "1":
+                          - Machine Learning: "机器学习"
+                          - ML: "机器学习"
+                      - "2": []
+                    clientRequestId: "client_123_456789"
+                error:
+                  value:
+                    status: error
+                    error: "文档解析失败：不支持的文件格式"
+  /api/files/assets/{taskId}_assets.zip:
+    get:
+      summary: 下载包含文档中所有图片的ZIP压缩包
+      description: |
+        未完成或错误时返回JSON状态，完成时返回ZIP文件。
+        需要根据 Content-Type 判断响应类型。
+      tags:
+        - 资源下载
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 任务ID
+      responses:
+        '200':
+          description: 下载成功或状态信息
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ZipStatusResponse'
+              examples:
+                pending:
+                  value:
+                    status: pending
+                processing:
+                  value:
+                    status: processing
+                error:
+                  value:
+                    status: error
+                notfound:
+                  value:
+                    status: notfound
+            application/zip:
+              schema:
+                type: string
+                format: binary
+              description: ZIP文件二进制数据
+
+components:
+  schemas:
+    UploadResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [success, error]
+        taskId:
+          type: string
+          description: 成功时返回异步任务ID
+        error:
+          type: string
+          description: 失败时返回错误信息
+    TaskQueryResponsePending:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [pending, processing, error]
+        error:
+          type: string
+          nullable: true
+    TaskQueryResponseCompleted:
+      type: object
+      required:
+        - fileId
+        - status
+        - originalMarkdown
+        - translatedMarkdown
+        - termAnnotations
+      properties:
+        fileId:
+          type: string
+          description: 文件ID（等于taskId）
+        status:
+          type: string
+          enum: [success]
+        originalMarkdown:
+          type: object
+          additionalProperties:
+            type: string
+          description: 分段原文，键为段编号（"1", "2"等）
+          example:
+            "1": "# Machine Learning\n\nML is important."
+            "2": "![Diagram](./images/ml.png)"
+        translatedMarkdown:
+          type: object
+          additionalProperties:
+            type: string
+          description: 分段译文，键为段编号（"1", "2"等）
+          example:
+            "1": "# 机器学习\n\n机器学习很重要。"
+            "2": "![Diagram](./images/ml.png)"
+        termAnnotations:
+          type: array
+          description: 术语标注（分段格式）
+          items:
+            type: object
+            additionalProperties:
+              type: array
+              items:
+                type: object
+                additionalProperties:
+                  type: string
+            example:
+              "1":
+                - Machine Learning: "机器学习"
+                - ML: "机器学习"
+              "2": []
+        clientRequestId:
+          type: string
+          description: 客户端请求ID
+    ZipStatusResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [pending, processing, error, notfound]

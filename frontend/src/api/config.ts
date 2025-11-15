@@ -5,7 +5,7 @@ const isDev = import.meta.env.DEV
 const useMock = import.meta.env.VITE_USE_MOCK === 'true'
 
 // Mock 服务地址（本地 Mock）- 必须包含完整的基础 URL
-const MOCK_BASE_URL = import.meta.env.VITE_MOCK_BASE_URL || 'http://127.0.0.1:4523/m1/7373604-7105599-6509159'
+const MOCK_BASE_URL = import.meta.env.VITE_MOCK_BASE_URL || 'http://127.0.0.1:4523/m1/7404747-7137418-6550118'
 // 真实后端地址（使用代理路径）
 const REAL_BASE_URL = '/apiA'
 

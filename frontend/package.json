@@ -18,6 +18,9 @@
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.2",
     "element-plus": "^2.11.7",
+    "idb": "^8.0.3",
+    "jszip": "^3.10.1",
+    "marked": "^17.0.0",
     "pinia": "^3.0.3",
     "vue": "^3.5.22"
   },

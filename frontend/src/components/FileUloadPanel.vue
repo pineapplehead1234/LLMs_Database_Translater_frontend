@@ -4,8 +4,8 @@
     <!-- 模式：按钮式单选 -->
     <el-radio-group v-model="strategy" size="default" class="mode-group">
       <el-radio-button label="normal">标准</el-radio-button>
-      <el-radio-button label="precise">精准</el-radio-button>
       <el-radio-button label="fast">极速</el-radio-button>
+      <el-radio-button label="thinking">精准</el-radio-button>
     </el-radio-group>
 
     <!-- 保存到：按钮 + 弹出树 -->
@@ -92,7 +92,7 @@ const loading = ref(false);
 const store = useTranslationStore();
 
 // 策略选择（翻译模式）
-const strategy = ref<"normal" | "precise" | "fast">("normal");
+const strategy = ref<"normal" | "fast" | "thinking">("normal");
 
 // 文件夹选择相关
 const folderPickerVisible = ref(false);
@@ -119,13 +119,13 @@ const folderTreeData = ref<TreeNode[]>([
 ]);
 
 // 文件状态类型
-type FileStatus = "waiting" | "uploading" | "processing" | "completed" | "error";
+type FileStatus = "success" | "pending" | "processing" | "error";
 
 // 带状态的文件类型
 type FileWithStatus = {
   file: File;
   status: FileStatus;
-  taskId?: string;
+  task_id?: string;
   error?: string;
 };
 
@@ -150,7 +150,7 @@ function onElChange(_file: UploadFile, fileList: UploadFile[]) {
   files.value = rawFiles;
   filesWithStatus.value = rawFiles.map((file) => ({
     file,
-    status: "waiting" as FileStatus,
+    status: "pending" as FileStatus,
   }));
 }
 
@@ -160,30 +160,28 @@ function onElRemove(_file: UploadFile, fileList: UploadFile[]) {
   files.value = rawFiles;
   filesWithStatus.value = rawFiles.map((file) => ({
     file,
-    status: "waiting" as FileStatus,
+    status: "pending" as FileStatus,
   }));
 }
 
 // 获取状态文本
 function getStatusText(status: FileStatus): string {
   const statusMap: Record<FileStatus, string> = {
-    waiting: "等待上传",
-    uploading: "上传中",
+    pending: "上传中",
     processing: "处理中",
-    completed: "已完成",
+    success: "已完成",
     error: "错误",
   };
   return statusMap[status] || "未知";
 }
 
 // 获取状态标签类型
-function getStatusType(status: FileStatus): "info" | "warning" | "success" | "danger" {
-  const typeMap: Record<FileStatus, "info" | "warning" | "success" | "danger"> = {
-    waiting: "info",
-    uploading: "warning",
-    processing: "warning",
-    completed: "success",
-    error: "danger",
+function getStatusType(status: FileStatus): "上传中" | "处理中" | "已完成" | "错误" {
+  const typeMap: Record<FileStatus, "上传中" | "处理中" | "已完成" | "错误"> = {
+    pending: "上传中",
+    processing: "处理中",
+    success: "已完成",
+    error: "错误",
   };
   return typeMap[status] || "info";
 }
@@ -198,7 +196,7 @@ async function upload() {
     if (!fileItem) continue;
 
     const file = fileItem.file;
-    fileItem.status = "uploading";
+    fileItem.status = "pending";
 
     try {
       const form = new FormData();
@@ -224,13 +222,13 @@ async function upload() {
         continue;
       }
 
-      const taskId = uploadData.taskId;
-      fileItem.taskId = taskId;
+      const task_id = uploadData.task_id;
+      fileItem.task_id = task_id;
       fileItem.status = "processing";
 
-      await queryTaskProgress(taskId, fileItem);
+      await queryTaskProgress(task_id, fileItem);
     } catch (e) {
-      fileItem.status = "error";
+      fileItem.error = "上传失败";
       const getErrorMessage = (error: unknown): string =>
         error instanceof Error ? error.message : String(error);
       fileItem.error = getErrorMessage(e);
@@ -243,7 +241,7 @@ async function upload() {
 // 查询任务进度
 async function queryTaskProgress(taskId: string, fileItem: FileWithStatus) {
   if (IS_MOCK) {
-    const response = await fetch(`${API_ENDPOINTS.QUERY}?taskId=${taskId}`);
+    const response = await fetch(`${API_ENDPOINTS.QUERY}?task_id=${taskId}`);
 
     if (!response.ok) {
       fileItem.status = "error";
@@ -254,12 +252,15 @@ async function queryTaskProgress(taskId: string, fileItem: FileWithStatus) {
     const data = await response.json();
 
     if (data.status === "success") {
-      fileItem.status = "completed";
+      fileItem.status = "success";
       store.setCurrentFile({
-        fileId: data.fileId,
-        originalMarkdown: data.originalMarkdown,
-        translatedMarkdown: data.translatedMarkdown,
-        termAnnotations: data.termAnnotations || [],
+        task_id: data.task_id,
+        status: data.status,
+        error: data.error,
+        client_request_id: data.client_request_id,
+        original_markdown: data.original_markdown,
+        translated_markdown: data.translated_markdown,
+        term_annotations: data.term_annotations || [],
       });
     } else if (data.status === "error") {
       fileItem.status = "error";
@@ -295,12 +296,15 @@ async function queryTaskProgress(taskId: string, fileItem: FileWithStatus) {
       const data = JSON.parse(text);
 
       if (data.status === "success") {
-        fileItem.status = "completed";
+        fileItem.status = "success";
         store.setCurrentFile({
-          fileId: data.fileId,
-          originalMarkdown: data.originalMarkdown,
-          translatedMarkdown: data.translatedMarkdown,
-          termAnnotations: data.termAnnotations || [],
+          task_id: data.task_id,
+          status: data.status,
+          error: data.error,
+          client_request_id: data.client_request_id,
+          original_markdown: data.original_markdown,
+          translated_markdown: data.translated_markdown,
+          term_annotations: data.term_annotations || [],
         });
         break;
       } else if (data.status === "error") {
@@ -346,6 +350,7 @@ async function queryTaskProgress(taskId: string, fileItem: FileWithStatus) {
 
 .file-status {
   margin-left: auto;
+color: #ff6b00 !important;
 }
 
 .controls {
