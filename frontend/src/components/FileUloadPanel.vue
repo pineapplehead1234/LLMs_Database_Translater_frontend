@@ -25,7 +25,7 @@
 
       <div style="max-height: 240px; overflow: auto; padding-right: 4px">
         <el-tree
-          :data="folderTreeData"
+          :data="folderTree"
           node-key="id"
           default-expand-all
           highlight-current
@@ -78,12 +78,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { API_ENDPOINTS, IS_MOCK } from "@/api/config";
 import { Folder, ArrowDown } from "@element-plus/icons-vue";
 import type { UploadFile } from "element-plus";
 
 import { useTranslationStore } from "@/stores/translationStore";
+import type { FileTreeNode } from "@/stores/translationStore";
+import type { TaskResultData } from "@/utils/taskCache";
 // 文件上传相关
 const elFilelist = ref<UploadFile[]>([]);
 const files = ref<File[]>([]);
@@ -99,24 +101,17 @@ const folderPickerVisible = ref(false);
 const selectedFolderId = ref<string | null>(null);
 const selectedFolderLabel = ref<string>("根目录");
 
-// 文件夹树数据类型
-type TreeNode = {
-  id: string;
-  name: string;
-  children?: TreeNode[];
-};
-
-// 文件夹树数据
-const folderTreeData = ref<TreeNode[]>([
-  {
-    id: "root",
-    name: "根目录",
-    children: [
-      { id: "docs", name: "docs" },
-      { id: "uploads", name: "uploads" },
-    ],
-  },
-]);
+const folderTree = computed<FileTreeNode[]>(() => {
+  const onlyFolders = (nodes: FileTreeNode[]): FileTreeNode[] => {
+    return nodes
+      .filter((n) => n.type === "folder")
+      .map((n) => ({
+        ...n,
+        children: n.children ? onlyFolders(n.children) : [],
+      }));
+  };
+  return onlyFolders(store.fileTree);
+});
 
 // 文件状态类型
 type FileStatus = "success" | "pending" | "processing" | "error";
@@ -132,7 +127,7 @@ type FileWithStatus = {
 const filesWithStatus = ref<FileWithStatus[]>([]);
 
 // 文件夹选择处理
-function onSelectFolder(node: TreeNode | null) {
+function onSelectFolder(node: FileTreeNode | null) {
   if (!node) {
     selectedFolderId.value = null;
     selectedFolderLabel.value = "根目录";
@@ -193,6 +188,7 @@ async function upload() {
 
   for (let i = 0; i < filesWithStatus.value.length; i++) {
     const fileItem = filesWithStatus.value[i];
+
     if (!fileItem) continue;
 
     const file = fileItem.file;
@@ -248,20 +244,20 @@ async function queryTaskProgress(taskId: string, fileItem: FileWithStatus) {
       fileItem.error = `查询失败: ${response.statusText}`;
       return;
     }
+    store.setCurrentFile({
+      task_id: taskId,
+      status: "processing",
+      error: null,
+      client_request_id: fileItem.file.name,
+      original_markdown: {},
+      translated_markdown: {},
+      term_annotations: {},
+    });
 
     const data = await response.json();
 
     if (data.status === "success") {
-      fileItem.status = "success";
-      store.setCurrentFile({
-        task_id: data.task_id,
-        status: data.status,
-        error: data.error,
-        client_request_id: data.client_request_id,
-        original_markdown: data.original_markdown,
-        translated_markdown: data.translated_markdown,
-        term_annotations: data.term_annotations || [],
-      });
+      await cacheAndSetCurrentFile(data, fileItem);
     } else if (data.status === "error") {
       fileItem.status = "error";
       fileItem.error = data.error;
@@ -270,6 +266,15 @@ async function queryTaskProgress(taskId: string, fileItem: FileWithStatus) {
     }
     return;
   }
+  store.setCurrentFile({
+    task_id: taskId,
+    status: "processing",
+    error: null,
+    client_request_id: fileItem.file.name,
+    original_markdown: {},
+    translated_markdown: {},
+    term_annotations: {},
+  });
 
   const response = await fetch(`${API_ENDPOINTS.QUERY}?taskId=${taskId}`);
 
@@ -296,16 +301,7 @@ async function queryTaskProgress(taskId: string, fileItem: FileWithStatus) {
       const data = JSON.parse(text);
 
       if (data.status === "success") {
-        fileItem.status = "success";
-        store.setCurrentFile({
-          task_id: data.task_id,
-          status: data.status,
-          error: data.error,
-          client_request_id: data.client_request_id,
-          original_markdown: data.original_markdown,
-          translated_markdown: data.translated_markdown,
-          term_annotations: data.term_annotations || [],
-        });
+        await cacheAndSetCurrentFile(data, fileItem);
         break;
       } else if (data.status === "error") {
         fileItem.status = "error";
@@ -318,6 +314,27 @@ async function queryTaskProgress(taskId: string, fileItem: FileWithStatus) {
       console.error("解析数据失败:", e, text);
     }
   }
+}
+
+async function cacheAndSetCurrentFile(data: TaskResultData, fileItem: FileWithStatus) {
+  const parentId = selectedFolderId.value ?? "root";
+  const docType = getDocTypeFromFileName(fileItem.file.name);
+
+  await store.handleTaskSuccess(data, {
+    parent_id: parentId,
+    docType,
+  });
+
+  // 更新当前这个文件的状态
+  fileItem.status = "success";
+}
+
+function getDocTypeFromFileName(name: string): "md" | "pdf" | "docx" {
+  const ext = name.split(".").pop()?.toLowerCase();
+  if (ext === "pdf" || ext === "docx" || ext === "md") {
+    return ext;
+  }
+  return "md";
 }
 </script>
 
@@ -350,7 +367,6 @@ async function queryTaskProgress(taskId: string, fileItem: FileWithStatus) {
 
 .file-status {
   margin-left: auto;
-color: #ff6b00 !important;
 }
 
 .controls {
