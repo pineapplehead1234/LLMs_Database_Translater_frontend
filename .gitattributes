@@ -1,0 +1,24 @@
+# 让 Git 自动识别文本文件并标准化
+* text=auto
+
+# 指定某些文本文件强制使用 LF（Unix 风格）
+*.sh    text eol=lf
+*.bash  text eol=lf
+*.zsh   text eol=lf
+
+# 代码文件 强制 LF（你也可以列出更多扩展）
+*.js    text eol=lf
+*.ts    text eol=lf
+*.vue   text eol=lf
+*.json  text eol=lf
+*.css   text eol=lf
+*.html  text eol=lf
+
+# 二进制文件保持原样
+*.png   binary
+*.jpg   binary
+*.gif   binary
+*.pdf   binary
+
+# 可选：确保 Git 不跟踪 node_modules
+node_modules/    export-ignore
