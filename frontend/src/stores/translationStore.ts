@@ -180,14 +180,6 @@ export const useTranslationStore = defineStore("translation", () => {
       return;
     }
 
-    // 3. 限制最多两层：
-    //    - parent.id === "root"      -> 可以再建一层（第一层）
-    //    - parent.parent_id === "root" -> 可以再建一层（第二层）
-    //    - 其他情况：已经是第二层，再往下禁止
-    if (parentNode.id !== "root" && parentNode.parent_id !== "root") {
-      // 已经在第二层了，不允许再创建子文件夹
-      return;
-    }
 
     // 4. 确保 children 存在
     if (!parentNode.children) {
@@ -245,6 +237,7 @@ export const useTranslationStore = defineStore("translation", () => {
     target.name = trimmed;
     persistFileTree();
   }
+
   return {
     currentFile,
     status,
@@ -260,5 +253,6 @@ export const useTranslationStore = defineStore("translation", () => {
     addFolderNode,
     deleteNode,
     renameNode,
+
   };
 });

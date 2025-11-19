@@ -1,154 +1,158 @@
 <template>
   <div class="file-tree">
-    <div class="toolbar">
-      <el-button size="small" @click="openAddDialog">新建文件夹</el-button>
-    </div>
-
-    <el-tree
-      ref="treeRef"
-      :data="store.fileTree"
-      node-key="id"
-      :props="treeProps"
-      default-expand-all
-      highlight-current
-      @node-click="onNodeClick"
-      @current-change="onCurrentChange"
-    >
+    <el-tree :data="treeData" node-key="id" :props="treeProps" highlight-current default-expand-all
+      @node-click="onNodeClick" @current-change="onCurrentChange">
       <template #default="{ data }">
         <el-dropdown trigger="contextmenu" @command="onNodeCommand($event, data)">
           <span class="custom-node">
             <span v-if="editingNodeId !== data.id" class="node-label">
               {{ data.name }}
             </span>
-            <el-input
-              v-else
-              v-model="editingName"
-              ref="renameInputRef"
-              size="small"
-              class="node-label"
-              @keyup.enter="confirmRename"
-              @blur="cancelRename"
-            />
+            <el-input v-else v-model="editingName" ref="renameInputRef" size="small" class="node-label"
+              @keyup.enter="confirmEdit" @blur="cancelEdit" @keyup.esc="cancelEdit" />
           </span>
 
-          <template #dropdown>
+          <template v-if="data.id !== '__create__'" #dropdown>
             <el-dropdown-menu>
               <el-dropdown-item command="rename" v-if="data.id !== 'root'">重命名</el-dropdown-item>
               <el-dropdown-item command="delete" v-if="data.id !== 'root'">删除</el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
+        <el-button v-if="data.id === 'root'" class="new-folder-btn" size="small" @click.stop="startCreate"
+          icon="Plus" />
       </template>
     </el-tree>
-
-    <!-- 新建文件夹对话框 -->
-    <el-dialog
-      v-model="addDialogVisible"
-      title="新建文件夹"
-      :close-on-click-modal="false"
-      width="300px"
-      @opened="focusAddInput"
-    >
-      <el-form>
-        <el-form-item label="文件夹名称" :label-width="80">
-          <el-input
-            v-model="newFolderName"
-            ref="addInputRef"
-            @keyup.enter="confirmAdd"
-            placeholder="请输入名称"
-          />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="addDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="confirmAdd" :loading="adding">确定</el-button>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick, onMounted } from 'vue';
+import { ref, nextTick, onMounted, computed } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { useTranslationStore } from '@/stores/translationStore';
 import type { FileTreeNode } from '@/stores/translationStore';
-
+import { Plus } from '@element-plus/icons-vue'
 const store = useTranslationStore();
 
-// 树配置
 const treeProps = { label: 'name', children: 'children' };
 
-// 当前选中的节点（用于确定新建位置）
 const currentSelectedNode = ref<FileTreeNode | null>(null);
 
-// 树引用（可选，用于未来扩展）
-const treeRef = ref();
-
-// === 新建状态 ===
-const addDialogVisible = ref(false);
-const newFolderName = ref('');
-const addInputRef = ref<HTMLInputElement | null>(null);
-const adding = ref(false);
-
-// === 重命名状态 ===
 const editingNodeId = ref<string | null>(null);
 const editingName = ref('');
+const createContext = ref<{ parentId: string } | null>(null);
+
 const renameInputRef = ref<HTMLInputElement | null>(null);
 
-// 初始化
 onMounted(() => {
   store.initFileTreeFromCache();
 });
 
-// 监听当前选中节点变化
 function onCurrentChange(data: FileTreeNode | null) {
   currentSelectedNode.value = data;
 }
-
-// 打开新建对话框
-function openAddDialog() {
-  newFolderName.value = '';
-  addDialogVisible.value = true;
-}
-
-// 自动聚焦 - 新建
-function focusAddInput() {
-  nextTick(() => {
-    addInputRef.value?.focus();
-  });
-}
-
-// 确认新建
-async function confirmAdd() {
-  const name = newFolderName.value.trim();
-  if (!name) {
-    ElMessage.warning('请输入文件夹名称');
-    return;
+const treeData = computed<FileTreeNode[]>(() => {
+  if (!createContext.value || editingNodeId.value !== '__create__') {
+    return store.fileTree;
   }
 
-  // 确定父节点：如果选中的是文件夹，则用它；否则用 root
+  const cloned = JSON.parse(JSON.stringify(store.fileTree)) as FileTreeNode[];
+  const parentId = createContext.value.parentId;
+
+  const placeholder: FileTreeNode = {
+    id: '__create__',
+    name: editingName.value || '新建文件夹',
+    type: 'folder',
+    parent_id: parentId,
+    children: [],
+  };
+
+  const insertPlaceholder = (nodes: FileTreeNode[]): boolean => {
+    for (const node of nodes) {
+      if (node.id === parentId) {
+        node.children = node.children || [];
+        node.children.unshift(placeholder);
+        return true;
+      }
+      if (node.children && insertPlaceholder(node.children)) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  if (parentId === 'root') {
+    const rootNode = cloned.find(item => item.id === 'root');
+    if (rootNode) {
+      rootNode.children = rootNode.children || [];
+      rootNode.children.unshift(placeholder);
+    }
+    return cloned;
+  }
+
+  insertPlaceholder(cloned);
+  return cloned;
+});
+
+function startCreate() {
   let parentId = 'root';
   const selected = currentSelectedNode.value;
   if (selected && selected.type === 'folder') {
     parentId = selected.id;
   }
+  console.log('📁 新建文件夹，父节点ID:', parentId);
+  // 🔴 关键：提前检查是否允许在此处新建
 
-  adding.value = true;
+  createContext.value = { parentId };
+  editingNodeId.value = '__create__';
+  editingName.value = '新建文件夹';
+
+  nextTick(() => {
+    renameInputRef.value?.focus();
+    renameInputRef.value?.select();
+  });
+}
+
+async function confirmEdit() {
+  if (!editingNodeId.value) return;
+
+  const name = editingName.value.trim();
+  if (!name) {
+    ElMessageBox.alert('名字不能为空', '提示标题', {
+      center: true, // 居中显示
+      confirmButtonText: '确定',
+    });
+  }
+
   try {
-    await store.addFolderNode({ parent_id: parentId, name });
-    ElMessage.success('新建成功');
-    addDialogVisible.value = false;
-    newFolderName.value = '';
+    if (editingNodeId.value === '__create__') {
+      if (!createContext.value) {
+        throw new Error('新建上下文无效');
+      }
+      await store.addFolderNode({
+        parent_id: createContext.value.parentId,
+        name,
+      });
+
+    } else {
+      await store.renameNode(editingNodeId.value, name);
+    }
+
+    cancelEdit();
   } catch (error: unknown) {
-    const msg = error instanceof Error ? error.message : '新建失败，请稍后重试';
+    const msg = error instanceof Error ? error.message : '操作失败';
     ElMessage.error(msg);
-  } finally {
-    adding.value = false;
   }
 }
 
-// 节点右键命令
+function cancelEdit() {
+  editingNodeId.value = null;
+  editingName.value = '';
+  createContext.value = null;
+}
+
 async function onNodeCommand(command: string, data: FileTreeNode) {
+  if (data.id === '__create__') return;
   if (command === 'delete') {
     try {
       await ElMessageBox.confirm(
@@ -159,7 +163,6 @@ async function onNodeCommand(command: string, data: FileTreeNode) {
       await store.deleteNode(data.id);
       ElMessage.success('删除成功');
     } catch (error) {
-      // 用户取消或删除失败
       if (error !== 'cancel') {
         ElMessage.error('删除失败');
       }
@@ -169,47 +172,15 @@ async function onNodeCommand(command: string, data: FileTreeNode) {
   }
 }
 
-// 开始重命名
 function startRename(data: FileTreeNode) {
+  createContext.value = null;
   editingNodeId.value = data.id;
   editingName.value = data.name || '';
-  focusRenameInput();
-}
-
-// 自动聚焦 - 重命名
-function focusRenameInput() {
   nextTick(() => {
     renameInputRef.value?.focus();
   });
 }
 
-// 确认重命名
-async function confirmRename() {
-  if (!editingNodeId.value) return;
-
-  const name = editingName.value.trim();
-  if (!name) {
-    ElMessage.warning('名称不能为空');
-    return;
-  }
-
-  try {
-    await store.renameNode(editingNodeId.value, name);
-    ElMessage.success('重命名成功');
-    cancelRename();
-  } catch (error: unknown) {
-    const msg = error instanceof Error ? error.message : '重命名失败';
-    ElMessage.error(msg);
-  }
-}
-
-// 取消重命名
-function cancelRename() {
-  editingNodeId.value = null;
-  editingName.value = '';
-}
-
-// 点击节点（用于加载文件内容）
 function onNodeClick(data: FileTreeNode) {
   if (data && data.type === 'file' && data.task_id) {
     store.loadTaskFromCache(data.task_id);
@@ -245,5 +216,32 @@ function onNodeClick(data: FileTreeNode) {
   padding: 2px 8px;
   height: 24px;
   line-height: 20px;
+}
+
+.root-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 4px 8px;
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+  border-bottom: 1px solid var(--el-border-color-light);
+  margin-bottom: 8px;
+}
+
+.root-title {
+  font-weight: 600;
+}
+
+.new-folder-btn {
+  padding: 4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+}
+
+/* 可选：hover 时显示边框 */
+.new-folder-btn:hover {
+  background-color: var(--el-fill-color-light);
 }
 </style>
