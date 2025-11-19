@@ -106,6 +106,7 @@ export async function saveFileTree(tree:FileTreeNodeData[]): Promise<void>{
   });
 }
 
+//加载文件树
 export async function loadFileTree():Promise<FileTreeNodeData[] | null>{
   const db = await openDB();
   return new Promise((resolve,reject) => {

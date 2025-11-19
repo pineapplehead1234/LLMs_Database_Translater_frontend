@@ -15,7 +15,7 @@ export default defineConfig(({ mode }) => {
   
   // Mock 服务地址（本地 Mock）
   const MOCK_BASE_URL = env.VITE_MOCK_BASE_URL || 'http://127.0.0.1:4523/m1/7404747-7137418-6550118'
-  
+    
   // 真实后端地址
   const REAL_BACKEND_A = env.VITE_BACKEND_A || 'http://127.0.0.1:8000'
   
