@@ -26,8 +26,12 @@
           <el-button class="nav-btn">⚙️</el-button>
         </div>
         <div class="file-content">
-          <div class="file-upload-panel"><FileUloadPanel /></div>
-          <div class="file-tree"><FileTree /></div>
+          <div class="file-upload-panel">
+            <FileUloadPanel />
+          </div>
+          <div class="file-tree">
+            <FileTree />
+          </div>
         </div>
       </div>
 
@@ -36,7 +40,7 @@
 
       <!-- 工作区（占剩余宽度） -->
       <div class="workbench">
-        <div class="tabbar">标签区域</div>
+        <TabBar />
 
         <div class="dual-pane">
           <!-- 原文区：自动填充剩余空间 -->
@@ -48,10 +52,7 @@
           <div class="inner-resizer" @mousedown="startResize('translated', $event)"></div>
 
           <!-- 译文区：宽度用 vw 绑定，flex: 0 0 auto 确保宽度被精确控制 -->
-          <div
-            class="translated-wrapper"
-            :style="{ width: translatedWidth + 'vw', flex: '0 0 auto' }"
-          >
+          <div class="translated-wrapper" :style="{ width: translatedWidth + 'vw', flex: '0 0 auto' }">
             <TranslationPanel />
           </div>
         </div>
@@ -66,6 +67,7 @@ import OriginalPanel from "@/components/OriginalPanel.vue";
 import TranslationPanel from "@/components/TranslationPanel.vue";
 import FileTree from "@/components/FileTree.vue";
 import FileUloadPanel from "@/components/FileUloadPanel.vue";
+import TabBar from "./components/TabBar.vue";
 const activeTab = ref("files");
 
 // 宽度用 vw 单位值（数字）
@@ -178,6 +180,7 @@ function stopResize() {
   height: 100%;
   z-index: 5;
 }
+
 .resizer:hover {
   background: #007acc;
 }
@@ -186,32 +189,26 @@ function stopResize() {
 .workbench {
   display: flex;
   flex-direction: column;
-  flex: 1; /* 占剩余空间 */
+  flex: 1;
+  /* 占剩余空间 */
   min-width: 0;
 }
 
-/* tabbar */
-.tabbar {
-  height: 40px;
-  border-bottom: 1px solid #2a2a2a;
-  display: flex;
-  align-items: center;
-  padding: 0 12px;
-  color: #ddd;
-}
 
 /* 双面板容器 */
 .dual-pane {
   display: flex;
   flex: 1;
-  min-height: 0; /* 必须：让子滚动条正常工作 */
+  min-height: 0;
+  /* 必须：让子滚动条正常工作 */
   min-width: 0;
 }
+
 .original-wrapper {
- flex: 1 1 auto;
- min-width: 200px;
- display: flex;
- overflow: hidden;
+  flex: 1 1 auto;
+  min-width: 200px;
+  display: flex;
+  overflow: hidden;
 }
 
 /* 内部分隔条（译文区左侧） */
@@ -222,8 +219,10 @@ function stopResize() {
   flex-shrink: 0;
   transition: background 0.15s;
   height: 100%;
-  z-index: 6; /* 保证在内容之上 */
+  z-index: 6;
+  /* 保证在内容之上 */
 }
+
 .inner-resizer:hover {
   background: #007acc;
 }
@@ -233,7 +232,8 @@ function stopResize() {
 .translated-wrapper {
   flex-shrink: 0;
   min-width: 0;
-  overflow: hidden; /* 改为hidden，让内部组件处理滚动 */
+  overflow: hidden;
+  /* 改为hidden，让内部组件处理滚动 */
 }
 
 /* 其余样式略过（保持你原来的） */
@@ -244,6 +244,7 @@ function stopResize() {
   background: #252525;
   border-bottom: 1px solid #333;
 }
+
 .nav-btn {
   flex: 1;
   padding: 8px 12px;
@@ -255,6 +256,7 @@ function stopResize() {
   font-size: 14px;
   transition: all 0.2s;
 }
+
 .nav-btn:hover {
   background: #333;
   color: #fff;
@@ -266,6 +268,7 @@ function stopResize() {
   flex-direction: column;
   min-height: 0;
 }
+
 .file-upload-panel {
   flex: 1;
   min-height: 0;
@@ -273,11 +276,34 @@ function stopResize() {
   display: flex;
   flex-direction: column;
 }
+
 .file-tree {
   flex: 1;
   min-height: 0;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+}
+
+.inner-resizer {
+  width: 6px;
+  background: #333;
+  cursor: col-resize;
+  flex-shrink: 0;
+  transition: background 0.15s;
+  height: 100%;
+  position: relative;
+  z-index: 10;
+}
+
+.resizer {
+  width: 6px;
+  background: #333;
+  cursor: col-resize;
+  flex-shrink: 0;
+  transition: background 0.15s;
+  height: 100%;
+  position: relative;
+  z-index: 10;
 }
 </style>

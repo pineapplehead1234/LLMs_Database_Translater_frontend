@@ -14,8 +14,12 @@
 
           <template v-if="data.id !== '__create__'" #dropdown>
             <el-dropdown-menu>
-              <el-dropdown-item command="rename" v-if="data.id !== 'root'">重命名</el-dropdown-item>
-              <el-dropdown-item command="delete" v-if="data.id !== 'root'">删除</el-dropdown-item>
+              <el-dropdown-item command="rename" v-if="data.id !== 'root' && data.type === 'folder'">
+                重命名
+              </el-dropdown-item>
+              <el-dropdown-item command="delete" v-if="data.id !== 'root'">
+                删除 <!-- 显示的文字 -->
+              </el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
@@ -32,6 +36,7 @@ import { ElMessage, ElMessageBox } from 'element-plus';
 import { useTranslationStore } from '@/stores/translationStore';
 import type { FileTreeNode } from '@/stores/translationStore';
 import { Plus } from '@element-plus/icons-vue'
+import { da } from 'element-plus/es/locales.mjs';
 const store = useTranslationStore();
 
 const treeProps = { label: 'name', children: 'children' };
@@ -162,6 +167,7 @@ async function onNodeCommand(command: string, data: FileTreeNode) {
       );
       await store.deleteNode(data.id);
       ElMessage.success('删除成功');
+      store.closeTab(data.task_id || '');
     } catch (error) {
       if (error !== 'cancel') {
         ElMessage.error('删除失败');
@@ -184,6 +190,13 @@ function startRename(data: FileTreeNode) {
 function onNodeClick(data: FileTreeNode) {
   if (data && data.type === 'file' && data.task_id) {
     store.loadTaskFromCache(data.task_id);
+
+    console.log('📄 加载文件，任务ID:', data.task_id);
+    store.openTab({
+      task_id: data.task_id,
+      title: data.name,
+      docType: data.docType ?? "md",
+    })
   }
 }
 </script>

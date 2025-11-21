@@ -41,6 +41,38 @@ export const useTranslationStore = defineStore("translation", () => {
   ]);
   const openTabs = ref<OpenTab[]>([]);
   const activeTaskId = ref<string | null>(null);
+
+  function openTab(options: { task_id: string; title: string; docType: "md" | "pdf" | "docx" }) {
+    const exists = openTabs.value.find((tab) => tab.task_id === options.task_id);
+    if (!exists) {
+      openTabs.value.push({
+        task_id: options.task_id,
+        title: options.title,
+        docType: options.docType,
+      });
+    }
+    activeTaskId.value = options.task_id;
+  }
+  function closeTab(taskId: string) {
+    const index = openTabs.value.findIndex((tab => tab.task_id === taskId));
+    if (index === -1) {
+      return;
+    }
+    openTabs.value.splice(index, 1);
+
+    if (activeTaskId.value === taskId) {
+      const next = openTabs.value[index] || openTabs.value[index - 1] || null;
+      if (next) {
+        activeTaskId.value = next.task_id;
+        loadTaskFromCache(next.task_id);
+      }
+      else {
+        activeTaskId.value = null;
+        currentFile.value = null;
+        status.value = "pending";
+      }
+    }
+  }
   function setCurrentFile(data: FileData) {
     currentFile.value = data;
     status.value = "success";
@@ -78,6 +110,11 @@ export const useTranslationStore = defineStore("translation", () => {
       docType,
       parent_id: parentId,
     });
+    openTab({
+      task_id: fileData.task_id,
+      title: fileData.client_request_id,
+      docType,
+    })
   }
 
   async function initFileTreeFromCache() {
@@ -227,12 +264,12 @@ export const useTranslationStore = defineStore("translation", () => {
     persistFileTree();
   }
 
-  function renameNode(id:string, name:string){
+  function renameNode(id: string, name: string) {
     const trimmed = name.trim();
-    if(!trimmed) return;
+    if (!trimmed) return;
 
     const target = findNodeById(fileTree.value, id);
-    if(!target || target.id === "root") return;
+    if (!target || target.id === "root") return;
 
     target.name = trimmed;
     persistFileTree();
@@ -253,6 +290,7 @@ export const useTranslationStore = defineStore("translation", () => {
     addFolderNode,
     deleteNode,
     renameNode,
-
+    openTab,
+    closeTab,
   };
 });

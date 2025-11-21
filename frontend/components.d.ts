@@ -49,6 +49,7 @@ declare module 'vue' {
     IconSupport: typeof import('./src/components/icons/IconSupport.vue')['default']
     IconTooling: typeof import('./src/components/icons/IconTooling.vue')['default']
     OriginalPanel: typeof import('./src/components/OriginalPanel.vue')['default']
+    TabBar: typeof import('./src/components/TabBar.vue')['default']
     TheWelcome: typeof import('./src/components/TheWelcome.vue')['default']
     Translation: typeof import('./src/components/translation.vue')['default']
     TranslationPanel: typeof import('./src/components/TranslationPanel.vue')['default']

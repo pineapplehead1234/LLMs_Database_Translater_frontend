@@ -7,21 +7,12 @@
     </div>
     <div v-else class="segments">
       <div v-for="(text, segmentId) in originalMarkdown" :key="segmentId" class="segment">
-        <div
-          class="segment-content"
-          v-html="renderWithTerms(text, segmentId)"
-          @mouseover="handleMouseOver"
-          @mouseout="handleMouseOut"
-        ></div>
+        <div class="segment-content" v-html="renderWithTerms(text, segmentId)" @mouseover="handleMouseOver"
+          @mouseout="handleMouseOut"></div>
       </div>
     </div>
-    <el-tooltip
-      v-model:visible="tooltipVisible"
-      :content="tooltipContent"
-      placement="top"
-      :virtual-ref="tooltipRef"
-      virtual-triggering
-    />
+    <el-tooltip v-model:visible="tooltipVisible" :content="tooltipContent" placement="top" :virtual-ref="tooltipRef"
+      virtual-triggering />
   </div>
 </template>
 
@@ -30,7 +21,10 @@ import { useTranslationStore } from "@/stores/translationStore";
 import { computed, ref } from "vue";
 import { marked } from "marked";
 import { ElTooltip } from "element-plus";
+import { getCachedImageUrl } from "@/utils/imageCache";
 const store = useTranslationStore();
+
+const taskId = computed(() => store.currentFile?.task_id ?? "");
 
 const originalMarkdown = computed(() => store.currentFile?.original_markdown || {});
 
@@ -49,10 +43,10 @@ function getTermsForSegment(segmentId: string) {
 }
 
 function renderWithTerms(text: string, segmentId: string) {
-  let html = marked(text) as string;
+  let html = renderMarkdownWithImages(text);
 
   const terms = getTermsForSegment(segmentId);
-  
+
   console.log('🔍 Segment:', segmentId);
   console.log('📝 Original text:', text);
   console.log('🏷️ Terms for this segment:', terms);
@@ -64,29 +58,58 @@ function renderWithTerms(text: string, segmentId: string) {
       console.warn('⚠️ 跳过无翻译的术语:', term);
       return;
     }
-    
+
     const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
     const regex = new RegExp(`\\b${escapedTerm}\\b`, "gi");
-    
+
     const beforeReplace = html;
     html = html.replace(regex, (match) => {
       console.log('✅ 匹配到术语:', match, '翻译:', translation);
       return `<span class="term-highlight" data-term="${match}" data-translation="${translation}">${match}</span>`;
     });
-    
+
     if (beforeReplace === html) {
       console.warn('❌ 术语未匹配:', term, '正则:', regex);
     }
   });
-  
+
   console.log('🎨 Final HTML:', html);
   return html;
+}
+function renderMarkdownWithImages(text: string): string {
+  const renderer = new marked.Renderer();
+
+  renderer.image = ({ href, title, text }: any) => {
+    let src = href || "";
+    console.log("[renderer.image] href =", href, "initial src =", src, "taskId =", taskId.value);
+    // 先只做第一步：把 images/ 前缀去掉，因为 zip 里存的是纯文件名
+    if (src.startsWith("images/")) {
+      src = src.slice("images/".length);
+    }
+
+    let finalSrc = href || "";
+    // 只对相对路径（非 http / blob）做映射
+    if (taskId.value && src && !src.startsWith("http") && !src.startsWith("blob:")) {
+      const blobUrl = getCachedImageUrl(taskId.value, src);
+      console.log('[renderer.image] try map src =', src, '=> blobUrl =', blobUrl);
+      if (blobUrl) {
+        src = blobUrl;
+      }
+    }
+
+    const altAttr = text ? ` alt="${text}"` : "";
+    const titleAttr = title ? ` title="${title}"` : "";
+
+    return `<img src="${src}"${altAttr}${titleAttr} />`;
+  };
+
+  return marked(text, { renderer }) as string;
 }
 
 function handleMouseOver(event: MouseEvent) {
   const target = event.target as HTMLElement;
-  
+
   console.log('🖱️ Mouse over:', target);
   console.log('📌 Has term-highlight class:', target.classList.contains("term-highlight"));
 
@@ -95,7 +118,7 @@ function handleMouseOver(event: MouseEvent) {
     const term = target.getAttribute("data-term");
     console.log('🏷️ Term:', term);
     console.log('🌐 Translation:', translation);
-    
+
     // 只有当翻译内容存在且有效时才显示 tooltip
     if (translation && translation !== "undefined" && translation !== "null") {
       tooltipContent.value = translation;

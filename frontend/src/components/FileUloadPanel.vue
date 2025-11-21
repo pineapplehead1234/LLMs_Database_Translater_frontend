@@ -9,43 +9,28 @@
     </el-radio-group>
 
     <!-- 保存到：按钮 + 弹出树 -->
-    <el-popover
-      placement="bottom-start"
-      width="260"
-      v-model:visible="folderPickerVisible"
-      :teleported="false"
-    >
+    <el-popover placement="bottom-start" width="260" v-model:visible="folderPickerVisible" :teleported="false">
       <template #reference>
         <el-button size="small" class="folder-trigger" @click="folderPickerVisible = true">
-          <el-icon style="margin-right: 6px"><Folder /></el-icon>
+          <el-icon style="margin-right: 6px">
+            <Folder />
+          </el-icon>
           保存到：{{ selectedFolderLabel }}
-          <el-icon style="margin-left: 6px"><ArrowDown /></el-icon>
+          <el-icon style="margin-left: 6px">
+            <ArrowDown />
+          </el-icon>
         </el-button>
       </template>
 
       <div style="max-height: 240px; overflow: auto; padding-right: 4px">
-        <el-tree
-          :data="folderTree"
-          node-key="id"
-          default-expand-all
-          highlight-current
-          :expand-on-click-node="false"
-          @current-change="onSelectFolder"
-        />
+        <el-tree :data="folderTree" node-key="id" default-expand-all highlight-current :expand-on-click-node="false"
+          @current-change="onSelectFolder" />
       </div>
     </el-popover>
   </div>
 
-  <el-upload
-    class="upload-area"
-    drag
-    multiple
-    :auto-upload="false"
-    :file-list="elFilelist"
-    :on-change="onElChange"
-    :on-remove="onElRemove"
-    :show-file-list="false"
-  >
+  <el-upload class="upload-area" drag multiple :auto-upload="false" :file-list="elFilelist" :on-change="onElChange"
+    :on-remove="onElRemove" :show-file-list="false">
     <div class="upload-text">拖拽文件到这里或点击上传</div>
     <template #tip>
       <div class="el-upload__tip">支持 .pdf / .docx / .md</div>
@@ -53,11 +38,7 @@
   </el-upload>
 
   <el-scrollbar v-if="filesWithStatus.length" class="file-list">
-    <div
-      class="file-row"
-      v-for="fileItem in filesWithStatus"
-      :key="fileItem.file.name + fileItem.file.size"
-    >
+    <div class="file-row" v-for="fileItem in filesWithStatus" :key="fileItem.file.name + fileItem.file.size">
       <div class="file-name">📄 {{ fileItem.file.name }}</div>
       <el-tag size="small" :type="getStatusType(fileItem.status)" class="file-status">
         {{ getStatusText(fileItem.status) }}
@@ -66,12 +47,7 @@
   </el-scrollbar>
 
   <div class="upload-actions" v-if="filesWithStatus.length">
-    <el-button
-      type="primary"
-      @click="upload"
-      :loading="loading"
-      :disabled="loading || filesWithStatus.length === 0"
-    >
+    <el-button type="primary" @click="upload" :loading="loading" :disabled="loading || filesWithStatus.length === 0">
       {{ loading ? "上传中..." : "开始上传" }}
     </el-button>
   </div>
@@ -86,6 +62,7 @@ import type { UploadFile } from "element-plus";
 import { useTranslationStore } from "@/stores/translationStore";
 import type { FileTreeNode } from "@/stores/translationStore";
 import type { TaskResultData } from "@/utils/taskCache";
+import { prepareTaskImages } from "@/utils/imageCache";
 // 文件上传相关
 const elFilelist = ref<UploadFile[]>([]);
 const files = ref<File[]>([]);
@@ -232,6 +209,12 @@ async function upload() {
   }
 
   loading.value = false;
+
+  // 关键：上传完成后清空这几个列表，下次点击“开始上传”只能处理新选择的文件
+
+  filesWithStatus.value = []; // 清空“上传记录列表”（下面那个 v-for 会不再显示任何文件）
+  files.value = []; // 清空原始 File 数组（如果后面有用到，可以保持一致）
+  elFilelist.value = []; // 清空 el-upload 控制的文件列表（相当于“把上传控件重置”）
 }
 
 // 查询任务进度
@@ -324,6 +307,8 @@ async function cacheAndSetCurrentFile(data: TaskResultData, fileItem: FileWithSt
     parent_id: parentId,
     docType,
   });
+
+  await prepareTaskImages(data.task_id);
 
   // 更新当前这个文件的状态
   fileItem.status = "success";
