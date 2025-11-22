@@ -6,7 +6,13 @@
           <div class="title">翻译助手</div>
         </el-col>
         <el-col :style="{ flex: '0 0 200px' }">
-          <div class="tools">🌙</div>
+          <div class="tools">
+            <!-- 左侧原来的月亮图标随便保留或删掉 -->
+            <span style="margin-right: 8px;">🌙</span>
+            <!-- 同步开关：v-model 绑定 syncEnabled，只控制“是否同步滚动” -->
+            <el-switch v-model="syncEnabled" active-text="同步滚动" inactive-text="不同步" inline-prompt
+              style="--el-switch-on-color: #409eff;" />
+          </div>
         </el-col>
         <el-col :style="{ flex: '1 1 auto' }"></el-col>
         <el-col :style="{ flex: '0 0 100px' }">
@@ -45,7 +51,7 @@
         <div class="dual-pane">
           <!-- 原文区：自动填充剩余空间 -->
           <div class="original-wrapper">
-            <OriginalPanel />
+            <OriginalPanel ref="originalRef" />
           </div>
 
           <!-- 内部分隔条（可拖动） -->
@@ -53,7 +59,7 @@
 
           <!-- 译文区：宽度用 vw 绑定，flex: 0 0 auto 确保宽度被精确控制 -->
           <div class="translated-wrapper" :style="{ width: translatedWidth + 'vw', flex: '0 0 auto' }">
-            <TranslationPanel />
+            <TranslationPanel ref="translatedRef" />
           </div>
         </div>
       </div>
@@ -68,6 +74,16 @@ import TranslationPanel from "@/components/TranslationPanel.vue";
 import FileTree from "@/components/FileTree.vue";
 import FileUloadPanel from "@/components/FileUloadPanel.vue";
 import TabBar from "./components/TabBar.vue";
+import { useSegmentScrollSync } from "@/composables/useSegmentScrollSync";
+
+const originalRef = ref<any>(null);
+const translatedRef = ref<any>(null);
+// 是否开启同步：默认 true
+const syncEnabled = ref(true);
+const { refreshLayouts } = useSegmentScrollSync(originalRef, translatedRef, {
+  enabled: syncEnabled,
+});
+
 const activeTab = ref("files");
 
 // 宽度用 vw 单位值（数字）
@@ -134,6 +150,8 @@ function stopResize() {
 
   document.removeEventListener("mousemove", handleResize);
   document.removeEventListener("mouseup", stopResize);
+  // 拖动结束后，通知两侧 Panel 重新测量段落高度（只影响 Y 轴）
+  refreshLayouts();
 }
 </script>
 

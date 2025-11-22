@@ -303,12 +303,14 @@ async function cacheAndSetCurrentFile(data: TaskResultData, fileItem: FileWithSt
   const parentId = selectedFolderId.value ?? "root";
   const docType = getDocTypeFromFileName(fileItem.file.name);
 
+  // 先为这个 task 解压并准备所有图片（内存 + IndexedDB）
+  await prepareTaskImages(data.task_id);
+
+  // 图片准备好了，再把任务数据写入 store，这样 Panel 首次渲染时就能直接命中 getCachedImageUrl
   await store.handleTaskSuccess(data, {
     parent_id: parentId,
     docType,
   });
-
-  await prepareTaskImages(data.task_id);
 
   // 更新当前这个文件的状态
   fileItem.status = "success";

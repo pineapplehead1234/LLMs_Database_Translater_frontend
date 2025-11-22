@@ -1,12 +1,12 @@
 <template>
-  <div class="original-panel">
+  <div class="original-panel" ref="containerRef">
     <div v-if="!hasContent" class="empty-state">
       <div class="empty-icon">📄</div>
       <div class="empty-text">暂无原文内容</div>
       <div class="empty-text">请先上传文件</div>
     </div>
     <div v-else class="segments">
-      <div v-for="(text, segmentId) in originalMarkdown" :key="segmentId" class="segment">
+      <div v-for="(text, segmentId) in originalMarkdown" :key="segmentId" class="segment" :data-segment-id="segmentId">
         <div class="segment-content" v-html="renderWithTerms(text, segmentId)" @mouseover="handleMouseOver"
           @mouseout="handleMouseOut"></div>
       </div>
@@ -18,7 +18,7 @@
 
 <script setup lang="ts">
 import { useTranslationStore } from "@/stores/translationStore";
-import { computed, ref } from "vue";
+import { computed, ref, onMounted, nextTick } from "vue";
 import { marked } from "marked";
 import { ElTooltip } from "element-plus";
 import { getCachedImageUrl } from "@/utils/imageCache";
@@ -33,9 +33,47 @@ const hasContent = computed(() => Object.keys(originalMarkdown.value).length > 0
 const tooltipVisible = ref(false);
 const tooltipContent = ref("");
 const tooltipRef = ref<HTMLElement>();
+//滚动容器的Dom引用,只关心Y轴滚动
+const containerRef = ref<HTMLElement | null>(null);
+// 保存每个段落的位置信息：id、相对容器顶部的 top、高度
+const segmentPositions = ref<Array<{ id: string; top: number; height: number }>>([]);
 
+function measureSegments() {
+  // 1. 拿到滚动容器的 DOM
+  const container = containerRef.value;
+  if (!container) return;
 
+  // 2. 选出容器内所有段落元素
+  const segmentEls = Array.from(
+    container.querySelectorAll<HTMLElement>(".segment")
+  );
 
+  // 3. 把每个段落转换成 { id, top, height }
+  const positions = segmentEls.map((el) => {
+    // 从 data-segment-id 里读出段落 id
+    const id = el.dataset.segmentId ?? "";
+
+    // 段落相对于容器顶部的距离：
+    // 因为容器是滚动容器 + position: relative，
+    // el.offsetTop 就可以理解为“内容内从顶部开始到这个段的像素距离”
+    const top = el.offsetTop;
+
+    // 段落高度，避免高度为 0 时后面除以 0
+    const height = el.offsetHeight || 1;
+
+    return { id, top, height };
+  });
+
+  // 4. 更新响应式数组
+  segmentPositions.value = positions;
+}
+function scrollToOffset(top: number) {
+  const container = containerRef.value;
+  if (!container) return;
+
+  // 只设置竖直方向的滚动
+  container.scrollTop = top;
+}
 function getTermsForSegment(segmentId: string) {
   const annotations = store.currentFile?.term_annotations;
   if (!annotations) return [];
@@ -137,6 +175,20 @@ function handleMouseOut(event: MouseEvent) {
     tooltipVisible.value = false;
   }
 }
+onMounted(() => {
+  // 等当前这一轮 DOM 更新完，再测量
+  nextTick(() => {
+    console.log("[panel original] containerRef in child", containerRef.value);
+    measureSegments();
+  });
+});
+
+defineExpose({
+  containerRef,
+  segmentPositions,
+  measureSegments,
+  scrollToOffset,
+});
 </script>
 
 <style scoped>
@@ -147,6 +199,7 @@ function handleMouseOut(event: MouseEvent) {
   padding: 16px;
   background: #1e1e1e;
   color: #ddd;
+  position: relative;
 }
 
 /* 空状态样式 */
@@ -157,6 +210,7 @@ function handleMouseOut(event: MouseEvent) {
   justify-content: center;
   height: 100%;
   color: #666;
+
 }
 
 .empty-icon {
