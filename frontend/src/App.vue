@@ -27,17 +27,40 @@
       <!-- 左侧栏 -->
       <div class="sidebar" :style="{ width: sidebarWidth + 'vw' }">
         <div class="nav-bar">
-          <el-button @click="activeTab = 'files'">📁</el-button>
-          <el-button @click="activeTab = 'knowledgeBase'">📚</el-button>
-          <el-button class="nav-btn">⚙️</el-button>
+          <!-- 文件页 -->
+          <el-button :type="activeTab === 'files' ? 'primary' : 'default'" @click="activeTab = 'files'">
+            📁
+          </el-button>
+
+          <!-- 模型配置页 -->
+          <el-button :type="activeTab === 'model' ? 'primary' : 'default'" @click="activeTab = 'model'">
+            📚
+          </el-button>
+
+          <!-- 数据库配置页 -->
+          <el-button :type="activeTab === 'database' ? 'primary' : 'default'" @click="activeTab = 'database'">
+            ⚙️
+          </el-button>
         </div>
         <div class="file-content">
-          <div class="file-upload-panel">
-            <FileUloadPanel />
-          </div>
-          <div class="file-tree">
-            <FileTree />
-          </div>
+          <!-- 文件页：上传 + 文件树 -->
+          <template v-if="activeTab === 'files'">
+            <div class="file-upload-panel">
+              <FileUloadPanel />
+            </div>
+            <div class="file-tree">
+              <FileTree />
+            </div>
+          </template>
+
+          <!-- 模型配置页：先用占位组件/文本 -->
+          <template v-else-if="activeTab === 'model'">
+            <ModelConfigPanel />
+          </template>
+          <!-- 数据库配置页：先用占位组件/文本 -->
+          <template v-else-if="activeTab === 'database'">
+            <DatabaseConfigPanel />
+          </template>
         </div>
       </div>
 
@@ -75,6 +98,8 @@ import FileTree from "@/components/FileTree.vue";
 import FileUloadPanel from "@/components/FileUloadPanel.vue";
 import TabBar from "./components/TabBar.vue";
 import { useSegmentScrollSync } from "@/composables/useSegmentScrollSync";
+import ModelConfigPanel from "@/components/ModelConfigPanel.vue";
+import DatabaseConfigPanel from "@/components/DatabseConfigPanel.vue";
 
 const originalRef = ref<any>(null);
 const translatedRef = ref<any>(null);
@@ -86,9 +111,14 @@ const { refreshLayouts } = useSegmentScrollSync(originalRef, translatedRef, {
 
 const activeTab = ref("files");
 
+
+
 // 宽度用 vw 单位值（数字）
 const sidebarWidth = ref(20); // 左侧栏初始宽度（vw）
 const translatedWidth = ref(40); // 译文区初始宽度（vw）
+
+
+
 
 // 拖动相关
 const isResizing = ref(false);
@@ -98,7 +128,9 @@ const startWidth = ref(0);
 
 // 开始拖动
 function startResize(target: "sidebar" | "translated", event: MouseEvent) {
+
   isResizing.value = true;
+
   resizingTarget.value = target;
   startX.value = event.clientX;
 

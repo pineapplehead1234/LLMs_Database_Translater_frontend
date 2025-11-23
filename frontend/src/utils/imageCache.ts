@@ -18,6 +18,8 @@ function getCacheKey(taskId: string, path: string): string {
 
 }
 
+
+
 // 同步从内存缓存种获取某张图片的url,如果没有就返回undefined
 export function getCachedImageUrl(taskId: string, path: string): string | undefined {
     const key = getCacheKey(taskId, path);
@@ -117,8 +119,10 @@ export async function prepareTaskImages(taskId: string): Promise<void> {
         try {
             if (IS_MOCK) {
                 await prepareImagesFromLocalZip(taskId);
+
             } else {
                 await prepareImagesFromApi(taskId);
+
             }
             prepareTaskIds.add(taskId);
         } finally {

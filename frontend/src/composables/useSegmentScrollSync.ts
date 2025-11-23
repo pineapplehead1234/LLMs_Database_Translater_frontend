@@ -11,10 +11,9 @@ type SegmentPosition = {
 
 // Panel 实例在 defineExpose 暴露出来的结构
 type PanelInstance = {
-    // 在父组件实例上，这里已经是 DOM 元素本身
-    containerRef: HTMLElement | null;
-    // 同理，这里是数组本身，而不是 ref
-    segmentPositions: SegmentPosition[];
+    // 子组件通过 defineExpose 暴露出的 ref / 数据
+    containerRef: Ref<HTMLElement | null>;
+    segmentPositions: Ref<SegmentPosition[]>;
     measureSegments: () => void;
     scrollToOffset: (top: number) => void;
 };
@@ -84,8 +83,7 @@ export function useSegmentScrollSync(
         if (innerOffset < 0) innerOffset = 0;
         if (innerOffset > srcSeg.height) innerOffset = srcSeg.height;
         // 段内滚动比例（0 ~ 1 之间）
-        const ratio =
-            srcSeg.height > 0 ? innerOffset / srcSeg.height : 0;
+        const ratio = srcSeg.height > 0 ? innerOffset / srcSeg.height : 0;
 
         // 3. 目标 panel 直接按索引匹配第 idx 段
         const targetIdx = Math.min(idx, dstSegs.length - 1);
@@ -96,19 +94,13 @@ export function useSegmentScrollSync(
         return dstSeg.top + ratio * dstSeg.height;
     }
 
-    // 4. 事件处理函数（后面再具体实现）
     function handleOriginalScroll() {
-        console.log("[sync] original scroll");
-        // 如果没开同步，直接忽略
+        console.log('[sync] original scroll fired');
         if (!syncEnabledRef.value) return;
-
-        // 如果当前是对方驱动的同步，避免反向触发
         if (syncingFrom.value === "translated") return;
 
         const original = originalRef.value;
         const translated = translatedRef.value;
-
-        // 任意一方还没准备好，直接返回
         if (!original || !translated || !originalEl || !translatedEl) {
             return;
         }
@@ -116,15 +108,11 @@ export function useSegmentScrollSync(
         syncingFrom.value = "original";
 
         const sourceTop = originalEl.scrollTop;
-
-        // 先计算本次滚动相对于上一次的位移
         const prevSourceTop = lastSourceTopFromOriginal;
+
         if (prevSourceTop != null) {
             const delta = sourceTop - prevSourceTop;
-
-            // 如果这次滚动很小（比如 |delta| < 3 像素），认为只是惯性/抖动，不让另一侧跟着动
             if (Math.abs(delta) < MIN_SCROLL_DELTA) {
-                // 但还是更新记录，避免下一次 delta 变得很大
                 lastSourceTopFromOriginal = sourceTop;
                 syncingFrom.value = null;
                 return;
@@ -132,9 +120,8 @@ export function useSegmentScrollSync(
         }
 
         const destCurrentTop = translatedEl.scrollTop;
-
-        const srcSegs = original.segmentPositions;
-        const dstSegs = translated.segmentPositions;
+        const srcSegs = original.segmentPositions.value;
+        const dstSegs = translated.segmentPositions.value;
 
         const mappedTop = computeMappedScrollTop(sourceTop, srcSegs, dstSegs);
 
@@ -154,7 +141,6 @@ export function useSegmentScrollSync(
             }
 
             lastSourceTopFromOriginal = sourceTop;
-
             translated.scrollToOffset(finalTop);
         } else {
             lastSourceTopFromOriginal = sourceTop;
@@ -163,9 +149,8 @@ export function useSegmentScrollSync(
         syncingFrom.value = null;
     }
 
-
     function handleTranslatedScroll() {
-        console.log("[sync] translated scroll");
+        console.log('[sync] translated scroll fired');
         if (!syncEnabledRef.value) return;
         if (syncingFrom.value === "original") return;
 
@@ -175,23 +160,25 @@ export function useSegmentScrollSync(
             return;
         }
 
-        const sourceTop = translatedEl.scrollTop;
+        syncingFrom.value = "translated";
 
+        const sourceTop = translatedEl.scrollTop;
         const prevSourceTop = lastSourceTopFromTranslated;
+
         if (prevSourceTop != null) {
             const delta = sourceTop - prevSourceTop;
 
             if (Math.abs(delta) < MIN_SCROLL_DELTA) {
                 lastSourceTopFromTranslated = sourceTop;
+                syncingFrom.value = null;
                 return;
             }
         }
 
         const destCurrentTop = originalEl.scrollTop;
-
-        const srcSegs = translated.segmentPositions;
-        const dstSegs = original.segmentPositions;
-
+        const srcSegs = translated.segmentPositions.value;
+        const dstSegs = original.segmentPositions.value;
+        console.log('[sync] seg lens', srcSegs.length, dstSegs.length);
         const mappedTop = computeMappedScrollTop(sourceTop, srcSegs, dstSegs);
 
         if (mappedTop != null) {
@@ -209,17 +196,18 @@ export function useSegmentScrollSync(
             }
 
             lastSourceTopFromTranslated = sourceTop;
-
             original.scrollToOffset(finalTop);
         } else {
             lastSourceTopFromTranslated = sourceTop;
         }
+
+        syncingFrom.value = null;
     }
 
-    // 5. 绑定和解绑滚动事件的工具函数
     function attachListeners() {
         if (originalEl) {
             originalEl.addEventListener("scroll", handleOriginalScroll);
+            console.log('[sync] attachListeners', { originalEl, translatedEl });
         }
         if (translatedEl) {
             translatedEl.addEventListener("scroll", handleTranslatedScroll);
@@ -235,18 +223,9 @@ export function useSegmentScrollSync(
         }
     }
 
-    // 6. 当 originalRef / translatedRef 就绪时，初始化同步
     watch(
         () => [originalRef.value, translatedRef.value] as const,
         ([original, translated]) => {
-            console.log("[sync] watch fired", { original, translated });
-            if (original) {
-                console.log("[sync] original keys", Object.keys(original));
-            }
-            if (translated) {
-                console.log("[sync] translated keys", Object.keys(translated));
-            }
-            // 任意一边还没挂载好：先解绑监听并清空 DOM 引用
             if (!original || !translated) {
                 detachListeners();
                 originalEl = null;
@@ -254,34 +233,23 @@ export function useSegmentScrollSync(
                 return;
             }
 
-            // 等下一帧，确保子组件的 containerRef 也已经填好 DOM
             nextTick(() => {
-                // 先解绑旧监听，避免重复绑定
                 detachListeners();
 
-                // 更新 DOM 引用（注意 .value）
-                originalEl = original.containerRef
-                translatedEl = translated.containerRef;
+                originalEl = original.containerRef.value;
+                translatedEl = translated.containerRef.value;
 
-                console.log("[sync] containerRefs after nextTick", {
-                    originalEl,
-                    translatedEl,
-                });
-
-                // 测量两边的段落位置
                 original.measureSegments();
                 translated.measureSegments();
 
-                // 都有 DOM 之后再绑定滚动事件
                 if (originalEl && translatedEl) {
-                    console.log("[sync] attachListeners", { originalEl, translatedEl });
                     attachListeners();
                 }
             });
         },
         { immediate: true }
     );
-    // 7. 对外暴露的 refreshLayouts，给 App.vue 在拖拽结束 / 文档切换后调用
+
     function refreshLayouts() {
         const original = originalRef.value;
         const translated = translatedRef.value;
@@ -289,12 +257,10 @@ export function useSegmentScrollSync(
         translated?.measureSegments();
     }
 
-    // 8. 组件卸载时清理事件监听
     onBeforeUnmount(() => {
         detachListeners();
     });
 
-    // composable 对外只暴露 refreshLayouts
     return {
         refreshLayouts,
     };

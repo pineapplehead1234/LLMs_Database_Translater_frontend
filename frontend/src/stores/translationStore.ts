@@ -165,6 +165,22 @@ export const useTranslationStore = defineStore("translation", () => {
     return null;
   }
 
+  function findFileNodeByName(parentId: string, name: string): FileTreeNode | null {
+    // 1. 先找到父节点
+    let parentNode = findNodeById(fileTree.value, parentId);
+    if (!parentNode || parentNode.type !== "folder") {
+      // 按你现在的约定，不合法就挂到 root
+      parentNode = fileTree.value[0] ?? null;
+    }
+    if (!parentNode || !parentNode.children) return null;
+
+    // 2. 在 children 里找同名 file 节点
+    const target = parentNode.children.find(
+      (child) => child.type === "file" && child.name === name
+    );
+    return target ?? null;
+  }
+
   function addFileNode(params: {
     task_id: string;
     client_request_id: string;
@@ -191,16 +207,33 @@ export const useTranslationStore = defineStore("translation", () => {
       parentNode.children = [];
     }
 
-    // 4. 插入一个 file 节点
-    parentNode.children.push({
-      id: params.task_id, // 可以直接用 task_id 当节点 id
-      type: "file",
-      parent_id: parentNode.id,
-      name: params.client_request_id, // 文件树上显示的名字
-      task_id: params.task_id,
-      client_request_id: params.client_request_id,
-      docType: params.docType,
-    });
+    // 4. 先判断有没有同名文件（覆盖逻辑）
+    const existing = findFileNodeByName(parentNode.id, params.client_request_id);
+
+    if (existing) {
+      // ✅ 覆盖：更新已有节点的信息
+      const oldTaskId = existing.task_id;
+
+      existing.task_id = params.task_id;
+      existing.client_request_id = params.client_request_id;
+      existing.name = params.client_request_id;
+      existing.docType = params.docType;
+
+      // 可选：这里可以顺便处理 openTabs / activeTaskId（下面说）
+      // 例如：如果旧的 taskId 有 tab，就关闭它 / 或更新到新的 taskId
+
+    } else {
+      // ✅ 新增：没有同名，就 push 新节点（沿用你现在这一段）
+      parentNode.children.push({
+        id: params.task_id,
+        type: "file",
+        parent_id: parentNode.id,
+        name: params.client_request_id,
+        task_id: params.task_id,
+        client_request_id: params.client_request_id,
+        docType: params.docType,
+      });
+    }
 
     persistFileTree();
   }

@@ -85,6 +85,7 @@ function scrollToOffset(top: number) {
 }
 
 function renderMarkdownWithImages(text: string): string {
+
   const renderer = new marked.Renderer();
 
   renderer.image = ({ href, title, text }: any) => {

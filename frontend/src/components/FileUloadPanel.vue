@@ -30,7 +30,7 @@
   </div>
 
   <el-upload class="upload-area" drag multiple :auto-upload="false" :file-list="elFilelist" :on-change="onElChange"
-    :on-remove="onElRemove" :show-file-list="false">
+    :on-remove="onElRemove" :show-file-list="false" accept=".pdf,.docx,.md">
     <div class="upload-text">拖拽文件到这里或点击上传</div>
     <template #tip>
       <div class="el-upload__tip">支持 .pdf / .docx / .md</div>
@@ -63,6 +63,7 @@ import { useTranslationStore } from "@/stores/translationStore";
 import type { FileTreeNode } from "@/stores/translationStore";
 import type { TaskResultData } from "@/utils/taskCache";
 import { prepareTaskImages } from "@/utils/imageCache";
+import { ElMessage } from "element-plus";
 // 文件上传相关
 const elFilelist = ref<UploadFile[]>([]);
 const files = ref<File[]>([]);
@@ -78,6 +79,15 @@ const folderPickerVisible = ref(false);
 const selectedFolderId = ref<string | null>(null);
 const selectedFolderLabel = ref<string>("根目录");
 
+//限制文件类型
+const ALLOWED_FILE_TYPES = ["pdf", "docx", "md"];
+
+//工具函数:判断一个File是否是予许的类型
+function isAllowedFile(file: File): boolean {
+  const ext = file.name.split(".").pop()?.toLowerCase();
+  if (!ext) return false;
+  return ALLOWED_FILE_TYPES.includes(ext);
+}
 const folderTree = computed<FileTreeNode[]>(() => {
   const onlyFolders = (nodes: FileTreeNode[]): FileTreeNode[] => {
     return nodes
@@ -117,13 +127,39 @@ function onSelectFolder(node: FileTreeNode | null) {
 
 // 文件变更处理
 function onElChange(_file: UploadFile, fileList: UploadFile[]) {
-  elFilelist.value = fileList;
+  // 先从 UploadFile 列表里拿到原始 File 对象
   const rawFiles = fileList.map((f) => f.raw).filter(Boolean) as File[];
-  files.value = rawFiles;
-  filesWithStatus.value = rawFiles.map((file) => ({
+
+  // 按是否允许拆分
+  const allowedFiles: File[] = [];
+  const rejectedFiles: File[] = [];
+
+  rawFiles.forEach((file) => {
+    if (isAllowedFile(file)) {
+      allowedFiles.push(file);
+    } else {
+      rejectedFiles.push(file);
+    }
+  });
+
+  // 更新内部使用的文件列表，只保留合法文件
+  files.value = allowedFiles;
+  filesWithStatus.value = allowedFiles.map((file) => ({
     file,
     status: "pending" as FileStatus,
   }));
+
+  // el-upload 自己维护的 fileList 也可以只保留合法文件（更干净）
+  elFilelist.value = fileList.filter((item) => {
+    const raw = item.raw as File | undefined;
+    return raw ? isAllowedFile(raw) : false;
+  });
+
+  // 如果有被拒绝的文件，给用户弹一个 warning 提示
+  if (rejectedFiles.length > 0) {
+    const names = rejectedFiles.map((f) => f.name).join("、");
+    ElMessage.warning(`以下文件类型不支持：${names}。仅支持 .pdf / .docx / .md`);
+  }
 }
 
 function onElRemove(_file: UploadFile, fileList: UploadFile[]) {
