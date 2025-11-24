@@ -3,6 +3,15 @@ import { API_ENDPOINTS, IS_MOCK } from "@/api/config";
 import { saveImageBlob, loadImageBlob } from "./taskCache";
 import imagesZipUrl from "@/mock/images.zip?url";
 
+// 统一处理图片路径（例如 zip 中是 images/foo.png，markdown 中是 images/foo.png 或 foo.png）
+// 目前约定：缓存和 IndexedDB 中都使用“去掉 images/ 前缀后的相对文件名”作为 path。
+function normalizeImagePath(path: string): string {
+    if (path.startsWith("images/")) {
+        return path.slice("images/".length);
+    }
+    return path;
+}
+
 //内存缓存: key 为taskId + "::" + path,value为blob: 开头的图片url
 const memoryUrlCache = new Map<string, string>();
 
@@ -12,10 +21,10 @@ const prepareTaskIds = new Set<string>();
 // 记录正在准备中的 taskId, 避免并发重复请求
 const preparingTasks = new Map<string, Promise<void>>();
 
-//生成内存缓存用的key
+//生成内存缓存用的key（内部统一使用规范化路径）
 function getCacheKey(taskId: string, path: string): string {
-    return `${taskId}::${path}`;
-
+    const normalized = normalizeImagePath(path);
+    return `${taskId}::${normalized}`;
 }
 
 
@@ -30,14 +39,15 @@ export function getCachedImageUrl(taskId: string, path: string): string | undefi
 
 // 从 IndexedDB 读取图片 Blob, 如果有则生成并缓存 blob: URL
 async function getOrCreateUrlFromDB(taskId: string, path: string): Promise<string | undefined> {
-    const cacheKey = getCacheKey(taskId, path);
+    const normalizedPath = normalizeImagePath(path);
+    const cacheKey = getCacheKey(taskId, normalizedPath);
 
     const cached = memoryUrlCache.get(cacheKey);
     if (cached) {
         return cached;
     }
 
-    const blob = await loadImageBlob(taskId, path);
+    const blob = await loadImageBlob(taskId, normalizedPath);
     if (!blob) {
         return undefined;
     }
@@ -58,7 +68,7 @@ async function prepareImagesFromZipBlob(taskId: string, zipBlob: Blob): Promise<
         }
 
         const entryName = entry.name;
-        const imagePath = entryName;
+        const imagePath = normalizeImagePath(entryName);
         // ★ 新增：看解压出来的路径和最终 key
         const cachekey = getCacheKey(taskId, imagePath);
         console.log("[zip] store image", { taskId, entryName, imagePath, cachekey });

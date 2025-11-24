@@ -11,9 +11,9 @@ type SegmentPosition = {
 
 // Panel 实例在 defineExpose 暴露出来的结构
 type PanelInstance = {
-    // 子组件通过 defineExpose 暴露出的 ref / 数据
-    containerRef: Ref<HTMLElement | null>;
-    segmentPositions: Ref<SegmentPosition[]>;
+    // 子组件通过 defineExpose 暴露出的数据，既可能是 ref，也可能已经是解包后的值
+    containerRef: Ref<HTMLElement | null> | HTMLElement | null;
+    segmentPositions: Ref<SegmentPosition[]> | SegmentPosition[];
     measureSegments: () => void;
     scrollToOffset: (top: number) => void;
 };
@@ -94,6 +94,25 @@ export function useSegmentScrollSync(
         return dstSeg.top + ratio * dstSeg.height;
     }
 
+    // 兼容组件通过 defineExpose 暴露 ref 或直接暴露 DOM 的两种情况
+    function resolveContainerRef(refOrEl: PanelInstance["containerRef"]): HTMLElement | null {
+        if (!refOrEl) return null;
+        const maybeRef = refOrEl as Ref<HTMLElement | null>;
+        if ("value" in maybeRef) {
+            return maybeRef.value;
+        }
+        return refOrEl as HTMLElement;
+    }
+
+    function resolveSegmentPositions(segOrRef: PanelInstance["segmentPositions"]): SegmentPosition[] {
+        if (!segOrRef) return [];
+        const maybeRef = segOrRef as Ref<SegmentPosition[]>;
+        if ("value" in maybeRef) {
+            return maybeRef.value || [];
+        }
+        return segOrRef as SegmentPosition[];
+    }
+
     function handleOriginalScroll() {
         console.log('[sync] original scroll fired');
         if (!syncEnabledRef.value) return;
@@ -120,8 +139,8 @@ export function useSegmentScrollSync(
         }
 
         const destCurrentTop = translatedEl.scrollTop;
-        const srcSegs = original.segmentPositions.value;
-        const dstSegs = translated.segmentPositions.value;
+        const srcSegs = resolveSegmentPositions(original.segmentPositions);
+        const dstSegs = resolveSegmentPositions(translated.segmentPositions);
 
         const mappedTop = computeMappedScrollTop(sourceTop, srcSegs, dstSegs);
 
@@ -176,9 +195,8 @@ export function useSegmentScrollSync(
         }
 
         const destCurrentTop = originalEl.scrollTop;
-        const srcSegs = translated.segmentPositions.value;
-        const dstSegs = original.segmentPositions.value;
-        console.log('[sync] seg lens', srcSegs.length, dstSegs.length);
+        const srcSegs = resolveSegmentPositions(translated.segmentPositions);
+        const dstSegs = resolveSegmentPositions(original.segmentPositions);
         const mappedTop = computeMappedScrollTop(sourceTop, srcSegs, dstSegs);
 
         if (mappedTop != null) {
@@ -236,8 +254,8 @@ export function useSegmentScrollSync(
             nextTick(() => {
                 detachListeners();
 
-                originalEl = original.containerRef.value;
-                translatedEl = translated.containerRef.value;
+                originalEl = resolveContainerRef(original.containerRef);
+                translatedEl = resolveContainerRef(translated.containerRef);
 
                 original.measureSegments();
                 translated.measureSegments();

@@ -18,7 +18,7 @@
 
 <script setup lang="ts">
 import { useTranslationStore } from "@/stores/translationStore";
-import { computed, ref, onMounted, nextTick } from "vue";
+import { computed, ref, onMounted, nextTick, watch } from "vue";
 import { marked } from "marked";
 import { ElTooltip } from "element-plus";
 import { getCachedImageUrl } from "@/utils/imageCache";
@@ -178,10 +178,19 @@ function handleMouseOut(event: MouseEvent) {
 onMounted(() => {
   // 等当前这一轮 DOM 更新完，再测量
   nextTick(() => {
-    console.log("[panel original] containerRef in child", containerRef.value);
     measureSegments();
   });
 });
+
+// 当当前文件发生切换时，内容高度会变化，需要重新测量各段的位置
+watch(
+  () => store.currentFile?.task_id,
+  () => {
+    nextTick(() => {
+      measureSegments();
+    });
+  }
+);
 
 defineExpose({
   containerRef,

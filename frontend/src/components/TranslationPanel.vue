@@ -18,7 +18,7 @@
 
 <script setup lang="ts">
 import { useTranslationStore } from "@/stores/translationStore";
-import { computed, ref, onMounted, nextTick } from "vue";
+import { computed, ref, onMounted, nextTick, watch } from "vue";
 import { marked } from "marked";
 import { getCachedImageUrl } from "@/utils/imageCache";
 // 获取Store实例
@@ -119,6 +119,16 @@ onMounted(() => {
     measureSegments();
   });
 });
+
+// 当前任务切换时，译文内容和高度变化，需要重新测量各段的位置
+watch(
+  () => store.currentFile?.task_id,
+  () => {
+    nextTick(() => {
+      measureSegments();
+    });
+  }
+);
 
 defineExpose({
   containerRef,
