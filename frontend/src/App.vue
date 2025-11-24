@@ -5,13 +5,37 @@
         <el-col :style="{ flex: '0 0 160px' }">
           <div class="title">翻译助手</div>
         </el-col>
-        <el-col :style="{ flex: '0 0 200px' }">
+        <el-col :style="{ flex: '0 0 220px' }">
           <div class="tools">
-            <!-- 左侧原来的月亮图标随便保留或删掉 -->
-            <span style="margin-right: 8px;">🌙</span>
-            <!-- 同步开关：v-model 绑定 syncEnabled，只控制“是否同步滚动” -->
-            <el-switch v-model="syncEnabled" active-text="同步滚动" inactive-text="不同步" inline-prompt
-              style="--el-switch-on-color: #409eff;" />
+            <el-space :size="8">
+              <!-- 主题切换：浅色 / 深色 -->
+              <el-tooltip :content="isDark ? '切换到日间模式' : '切换到夜间模式'">
+                <el-button
+                  circle
+                  :type="isDark ? 'primary' : 'default'"
+                  @click="isDark = !isDark"
+                >
+                  <el-icon>
+                    <Moon v-if="isDark" />
+                    <Sunny v-else />
+                  </el-icon>
+                </el-button>
+              </el-tooltip>
+
+              <!-- 同步滚动：联动 / 取消联动 -->
+              <el-tooltip :content="syncEnabled ? '已开启同步滚动' : '点击开启同步滚动'">
+                <el-button
+                  circle
+                  :type="syncEnabled ? 'primary' : 'default'"
+                  @click="syncEnabled = !syncEnabled"
+                >
+                  <el-icon>
+                    <Link v-if="syncEnabled" />
+                    <SwitchButton v-else />
+                  </el-icon>
+                </el-button>
+              </el-tooltip>
+            </el-space>
           </div>
         </el-col>
         <el-col :style="{ flex: '1 1 auto' }"></el-col>
@@ -91,7 +115,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import OriginalPanel from "@/components/OriginalPanel.vue";
 import TranslationPanel from "@/components/TranslationPanel.vue";
 import FileTree from "@/components/FileTree.vue";
@@ -100,7 +124,8 @@ import TabBar from "./components/TabBar.vue";
 import { useSegmentScrollSync } from "@/composables/useSegmentScrollSync";
 import ModelConfigPanel from "@/components/ModelConfigPanel.vue";
 import DatabaseConfigPanel from "@/components/DatabseConfigPanel.vue";
-
+import { useThemeStore } from "@/stores/themestore";
+import { Sunny, Moon, Link, SwitchButton } from "@element-plus/icons-vue";
 const originalRef = ref<any>(null);
 const translatedRef = ref<any>(null);
 // 是否开启同步：默认 true
@@ -126,6 +151,12 @@ const resizingTarget = ref<"sidebar" | "translated" | null>(null);
 const startX = ref(0);
 const startWidth = ref(0);
 
+
+const themeStore = useThemeStore();
+const isDark = computed({
+  get: () => themeStore.theme === 'dark',
+  set: (val: boolean) => themeStore.setTheme(val ? 'dark' : 'light'),
+});
 // 开始拖动
 function startResize(target: "sidebar" | "translated", event: MouseEvent) {
 
@@ -192,29 +223,29 @@ function stopResize() {
   height: 100%;
   margin: 0;
   padding: 0;
-  background-color: red;
   overflow: hidden;
+  background-color: var(--bg-app);
 }
 
 .app-header {
   padding: 0;
   margin: 0;
-  background-color: #000;
-  height: 56px;
+  background-color: var(--bg-header);
+  height: 32px;
 }
 
 /* 主内容区 */
 .main-content {
   display: flex;
-  height: calc(100% - 56px);
-  background-color: #1e1e1e;
+  height: calc(100% - 32px);
+  background-color: var(--bg-main);
   min-height: 0;
 }
 
 /* 左侧栏 */
 .sidebar {
   flex-shrink: 0;
-  background: #252525;
+  background: var(--bg-sidebar);
   overflow: auto;
   display: flex;
   flex-direction: column;
@@ -223,7 +254,7 @@ function stopResize() {
 /* 左侧分隔条 */
 .resizer {
   width: 6px;
-  background: #333;
+  background: var(--accent-color);
   cursor: col-resize;
   flex-shrink: 0;
   transition: background 0.15s;
@@ -242,6 +273,7 @@ function stopResize() {
   flex: 1;
   /* 占剩余空间 */
   min-width: 0;
+  background-color: var(--bg-workbench);
 }
 
 
@@ -264,7 +296,7 @@ function stopResize() {
 /* 内部分隔条（译文区左侧） */
 .inner-resizer {
   width: 6px;
-  background: #333;
+  background: var(--border-strong);
   cursor: col-resize;
   flex-shrink: 0;
   transition: background 0.15s;
@@ -333,6 +365,12 @@ function stopResize() {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+}
+
+.tools {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
 }
 
 .inner-resizer {

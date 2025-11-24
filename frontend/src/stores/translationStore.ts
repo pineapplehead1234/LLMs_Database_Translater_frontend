@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import { loadTaskResult, saveTaskResult, saveFileTree, loadFileTree } from "@/utils/taskCache";
+import { prepareTaskImages } from "@/utils/imageCache";
 import type { TaskResultData, FileTreeNodeData } from "@/utils/taskCache";
 
 interface TermAnnotation {
@@ -141,6 +142,15 @@ export const useTranslationStore = defineStore("translation", () => {
     const cached = await loadTaskResult(taskId);
     if (!cached) {
       return false;
+    }
+
+    // 为从缓存打开的任务准备图片资源：
+    // 重新下载 / 解压该 task 的图片 zip，并填充内存缓存，
+    // 这样 OriginalPanel / TranslationPanel 在同步渲染 markdown 时就能命中 getCachedImageUrl。
+    try {
+      await prepareTaskImages(taskId);
+    } catch (e) {
+      console.error("准备任务图片失败", e);
     }
 
     setCurrentFile(cached as FileData);

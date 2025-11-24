@@ -28,7 +28,6 @@ function getCacheKey(taskId: string, path: string): string {
 }
 
 
-
 // 同步从内存缓存种获取某张图片的url,如果没有就返回undefined
 export function getCachedImageUrl(taskId: string, path: string): string | undefined {
     const key = getCacheKey(taskId, path);
@@ -84,34 +83,38 @@ async function prepareImagesFromZipBlob(taskId: string, zipBlob: Blob): Promise<
 }
 
 //开发期专用,从本地images.zip解压出图片,为某个taskId准备图片Blob + URL
-async function prepareImagesFromLocalZip(taskId: string): Promise<void> {
-    //已经准备过了就直接返回
+// 返回值表示本次是否“真正成功”地准备好了图片
+async function prepareImagesFromLocalZip(taskId: string): Promise<boolean> {
+    //已经准备过了就直接返回成功
     if (prepareTaskIds.has(taskId)) {
-        return;
+        return true;
     }
     //下载并解压
     const response = await fetch(imagesZipUrl);
     if (!response.ok) {
         console.error("无法下载图片zip文件:", response.statusText);
-        return;
+        return false;
     }
 
     const zipBlob = await response.blob();
 
     await prepareImagesFromZipBlob(taskId, zipBlob);
+    return true;
 }
 
 // 真实环境: 通过后端 /api/task/download/images?task_id=... 下载 ZIP 再解压
-async function prepareImagesFromApi(taskId: string): Promise<void> {
+// 返回值表示本次是否“真正成功”地准备好了图片
+async function prepareImagesFromApi(taskId: string): Promise<boolean> {
     const url = `${API_ENDPOINTS.DOWNLOAD_IMAGES}?task_id=${encodeURIComponent(taskId)}`;
     const response = await fetch(url);
     if (!response.ok) {
         console.error("无法下载任务图片 zip 文件:", response.statusText);
-        return;
+        return false;
     }
 
     const zipBlob = await response.blob();
     await prepareImagesFromZipBlob(taskId, zipBlob);
+    return true;
 }
 
 // 对外统一入口: 根据环境准备某个 taskId 的所有图片
@@ -125,16 +128,18 @@ export async function prepareTaskImages(taskId: string): Promise<void> {
         return existing;
     }
 
-    const promise = (async () => {
+    const promise: Promise<void> = (async () => {
         try {
+            let success = false;
             if (IS_MOCK) {
-                await prepareImagesFromLocalZip(taskId);
-
+                success = await prepareImagesFromLocalZip(taskId);
             } else {
-                await prepareImagesFromApi(taskId);
-
+                success = await prepareImagesFromApi(taskId);
             }
-            prepareTaskIds.add(taskId);
+            // 只有在本次真正成功准备好图片时，才认为该 taskId 已“准备完成”
+            if (success) {
+                prepareTaskIds.add(taskId);
+            }
         } finally {
             preparingTasks.delete(taskId);
         }
