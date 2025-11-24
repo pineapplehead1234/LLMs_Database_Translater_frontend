@@ -10,7 +10,7 @@ export type TaskResultData = {
   term_annotations: Record<string, TermAnnotation[]>;
 };
 
-type TermAnnotation = {
+export type TermAnnotation = {
   term: string
   translation: string
 }
