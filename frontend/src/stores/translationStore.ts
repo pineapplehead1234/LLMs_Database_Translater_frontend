@@ -2,12 +2,9 @@ import { defineStore } from "pinia";
 import { ref } from "vue";
 import { loadTaskResult, saveTaskResult, saveFileTree, loadFileTree } from "@/utils/taskCache";
 import { prepareTaskImages } from "@/utils/imageCache";
-import type { TaskResultData, FileTreeNodeData } from "@/utils/taskCache";
+import type { TaskResultData, FileTreeNodeData, TermAnnotation} from "@/utils/taskCache";
 
-interface TermAnnotation {
-  term: string;
-  translation: string;
-}
+
 interface FileData {
   task_id: string;
   status: string;

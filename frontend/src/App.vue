@@ -10,11 +10,7 @@
             <el-space :size="8">
               <!-- 主题切换：浅色 / 深色 -->
               <el-tooltip :content="isDark ? '切换到日间模式' : '切换到夜间模式'">
-                <el-button
-                  circle
-                  :type="isDark ? 'primary' : 'default'"
-                  @click="isDark = !isDark"
-                >
+                <el-button circle :type="isDark ? 'primary' : 'default'" @click="isDark = !isDark">
                   <el-icon>
                     <Moon v-if="isDark" />
                     <Sunny v-else />
@@ -22,13 +18,9 @@
                 </el-button>
               </el-tooltip>
 
-              <!-- 同步滚动：联动 / 取消联动 -->
+              <!-- 同步滚动：联动 / 取消联动（仅翻译视图有效） -->
               <el-tooltip :content="syncEnabled ? '已开启同步滚动' : '点击开启同步滚动'">
-                <el-button
-                  circle
-                  :type="syncEnabled ? 'primary' : 'default'"
-                  @click="syncEnabled = !syncEnabled"
-                >
+                <el-button circle :type="syncEnabled ? 'primary' : 'default'" @click="syncEnabled = !syncEnabled">
                   <el-icon>
                     <Link v-if="syncEnabled" />
                     <SwitchButton v-else />
@@ -48,67 +40,112 @@
     </el-header>
 
     <div class="main-content">
-      <!-- 左侧栏 -->
-      <div class="sidebar" :style="{ width: sidebarWidth + 'vw' }">
-        <div class="nav-bar">
-          <!-- 文件页 -->
-          <el-button :type="activeTab === 'files' ? 'primary' : 'default'" @click="activeTab = 'files'">
-            📁
-          </el-button>
-
-          <!-- 模型配置页 -->
-          <el-button :type="activeTab === 'model' ? 'primary' : 'default'" @click="activeTab = 'model'">
-            📚
-          </el-button>
-
-          <!-- 数据库配置页 -->
-          <el-button :type="activeTab === 'database' ? 'primary' : 'default'" @click="activeTab = 'database'">
-            ⚙️
-          </el-button>
+      <!-- 最左侧 Activity Bar：切换不同工作模式 -->
+      <div class="activity-bar">
+        <div class="activity-item" :class="{ active: activeView === 'translate' }" @click="activeView = 'translate'"
+          title="文档翻译">
+          <el-icon>
+            <DocumentCopy />
+          </el-icon>
         </div>
-        <div class="file-content">
-          <!-- 文件页：上传 + 文件树 -->
-          <template v-if="activeTab === 'files'">
+        <div class="activity-item" :class="{ active: activeView === 'kb' }" @click="activeView = 'kb'" title="知识库管理">
+          <el-icon>
+            <DataLine />
+          </el-icon>
+        </div>
+        <div class="activity-item" :class="{ active: activeView === 'model' }" @click="activeView = 'model'"
+          title="模型配置">
+          <el-icon>
+            <Setting />
+          </el-icon>
+        </div>
+      </div>
+
+      <!-- 中间侧边栏：随视图变化 -->
+      <div class="sidebar" :style="{ width: sidebarWidth + 'vw' }">
+        <!-- 翻译视图侧边栏：上传 + 文件树 -->
+        <template v-if="activeView === 'translate'">
+          <div class="sidebar-header">
+            <span>文档</span>
+          </div>
+          <div class="file-content">
             <div class="file-upload-panel">
               <FileUloadPanel />
             </div>
             <div class="file-tree">
               <FileTree />
             </div>
-          </template>
+          </div>
+        </template>
 
-          <!-- 模型配置页：先用占位组件/文本 -->
-          <template v-else-if="activeTab === 'model'">
-            <ModelConfigPanel />
-          </template>
-          <!-- 数据库配置页：先用占位组件/文本 -->
-          <template v-else-if="activeTab === 'database'">
-            <DatabaseConfigPanel />
-          </template>
-        </div>
+        <!-- 知识库视图侧边栏：预留为数据源/任务列表等 -->
+        <template v-else-if="activeView === 'kb'">
+          <div class="sidebar-header">
+            <span>知识库</span>
+          </div>
+          <div class="sidebar-body">
+            <p class="sidebar-tip">在右侧可以执行知识库的导入和删除操作。</p>
+          </div>
+        </template>
+
+        <!-- 模型配置视图侧边栏：可以放快捷说明或留空 -->
+        <template v-else-if="activeView === 'model'">
+          <div class="sidebar-header">
+            <span>模型配置</span>
+          </div>
+          <div class="sidebar-body">
+            <p class="sidebar-tip">在右侧配置当前使用的模型和参数。</p>
+          </div>
+        </template>
       </div>
 
       <!-- 左侧分隔条（可拖动） -->
       <div class="resizer" @mousedown="startResize('sidebar', $event)"></div>
 
-      <!-- 工作区（占剩余宽度） -->
+      <!-- 右侧工作区：随视图切换 -->
       <div class="workbench">
-        <TabBar />
+        <!-- 翻译工作台 -->
+        <template v-if="activeView === 'translate'">
+          <TabBar />
 
-        <div class="dual-pane">
-          <!-- 原文区：自动填充剩余空间 -->
-          <div class="original-wrapper">
-            <OriginalPanel ref="originalRef" />
+          <div class="dual-pane">
+            <!-- 原文区：自动填充剩余空间 -->
+            <div class="original-wrapper">
+              <OriginalPanel ref="originalRef" />
+            </div>
+
+            <!-- 内部分隔条（可拖动） -->
+            <div class="inner-resizer" @mousedown="startResize('translated', $event)"></div>
+
+            <!-- 译文区：宽度用 vw 绑定，flex: 0 0 auto 确保宽度被精确控制 -->
+            <div class="translated-wrapper" :style="{ width: translatedWidth + 'vw', flex: '0 0 auto' }">
+              <TranslationPanel ref="translatedRef" />
+            </div>
           </div>
+        </template>
 
-          <!-- 内部分隔条（可拖动） -->
-          <div class="inner-resizer" @mousedown="startResize('translated', $event)"></div>
+        <!-- 知识库管理视图（RAG 管理） -->
+        <template v-else-if="activeView === 'kb'">
+          <div class="rag-view">
+            <div class="rag-status-indicator">
+              <span class="status-dot" />
+              <span class="rag-status-text">知识库服务</span>
+            </div>
+            <h2 class="rag-title">知识库管理</h2>
+            <p class="rag-subtitle">在这里执行知识库的构建、追加和删除操作。</p>
 
-          <!-- 译文区：宽度用 vw 绑定，flex: 0 0 auto 确保宽度被精确控制 -->
-          <div class="translated-wrapper" :style="{ width: translatedWidth + 'vw', flex: '0 0 auto' }">
-            <TranslationPanel ref="translatedRef" />
+            <div class="rag-panel">
+              <DatabaseConfigPanel />
+            </div>
           </div>
-        </div>
+        </template>
+
+        <!-- 模型配置视图 -->
+        <template v-else-if="activeView === 'model'">
+          <div class="model-view">
+            <ModelConfigPanel />
+          </div>
+        </template>
       </div>
     </div>
   </el-container>
@@ -125,25 +162,31 @@ import { useSegmentScrollSync } from "@/composables/useSegmentScrollSync";
 import ModelConfigPanel from "@/components/ModelConfigPanel.vue";
 import DatabaseConfigPanel from "@/components/DatabseConfigPanel.vue";
 import { useThemeStore } from "@/stores/themestore";
-import { Sunny, Moon, Link, SwitchButton } from "@element-plus/icons-vue";
+import {
+  Sunny,
+  Moon,
+  Link,
+  SwitchButton,
+  DocumentCopy,
+  DataLine,
+  Setting,
+} from "@element-plus/icons-vue";
+
 const originalRef = ref<any>(null);
 const translatedRef = ref<any>(null);
-// 是否开启同步：默认 true
+
+// 是否开启同步：默认 true（仅翻译模式有意义）
 const syncEnabled = ref(true);
 const { refreshLayouts } = useSegmentScrollSync(originalRef, translatedRef, {
   enabled: syncEnabled,
 });
 
-const activeTab = ref("files");
-
-
+// 顶层视图：翻译 / 知识库 / 模型配置
+const activeView = ref<"translate" | "kb" | "model">("translate");
 
 // 宽度用 vw 单位值（数字）
-const sidebarWidth = ref(20); // 左侧栏初始宽度（vw）
+const sidebarWidth = ref(20); // 中间侧边栏初始宽度（vw）
 const translatedWidth = ref(40); // 译文区初始宽度（vw）
-
-
-
 
 // 拖动相关
 const isResizing = ref(false);
@@ -151,15 +194,14 @@ const resizingTarget = ref<"sidebar" | "translated" | null>(null);
 const startX = ref(0);
 const startWidth = ref(0);
 
-
 const themeStore = useThemeStore();
 const isDark = computed({
-  get: () => themeStore.theme === 'dark',
-  set: (val: boolean) => themeStore.setTheme(val ? 'dark' : 'light'),
+  get: () => themeStore.theme === "dark",
+  set: (val: boolean) => themeStore.setTheme(val ? "dark" : "light"),
 });
+
 // 开始拖动
 function startResize(target: "sidebar" | "translated", event: MouseEvent) {
-
   isResizing.value = true;
 
   resizingTarget.value = target;
@@ -197,7 +239,6 @@ function handleResize(event: MouseEvent) {
     sidebarWidth.value = Math.max(minWidth, Math.min(maxWidth, newWidth));
   } else if (resizingTarget.value === "translated") {
     // 译文区：鼠标向右移动 -> translatedWidth 应该增大，向左移动 -> 减小
-    // 但因为 inner-resizer 在原文左侧，计算方式如下（这是更直观的处理）：
     const newWidth = startWidth.value - deltaVw;
     translatedWidth.value = Math.max(minWidth, Math.min(maxWidth, newWidth));
   }
@@ -234,7 +275,7 @@ function stopResize() {
   height: 32px;
 }
 
-/* 主内容区 */
+/* 主内容区：Activity Bar + Sidebar + Workbench */
 .main-content {
   display: flex;
   height: calc(100% - 32px);
@@ -242,24 +283,105 @@ function stopResize() {
   min-height: 0;
 }
 
-/* 左侧栏 */
+/* Activity Bar：最左侧窄栏 */
+.activity-bar {
+  width: 48px;
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 6px;
+  flex-shrink: 0;
+}
+
+.activity-item {
+  width: 100%;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-secondary);
+  border-left: 2px solid transparent;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.activity-item.active {
+  color: var(--accent-color);
+  border-left-color: var(--accent-color);
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+.activity-item .el-icon {
+  font-size: 20px;
+}
+
+.activity-spacer {
+  flex: 1;
+}
+
+/* 中间侧边栏 */
 .sidebar {
   flex-shrink: 0;
   background: var(--bg-sidebar);
   overflow: auto;
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
-/* 左侧分隔条 */
+.sidebar-header {
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-color);
+  text-transform: uppercase;
+}
+
+.sidebar-body {
+  padding: 12px;
+}
+
+.sidebar-tip {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.file-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.file-upload-panel {
+  flex: 0 0 auto;
+  padding: 8px 8px 0;
+}
+
+.file-tree {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+}
+
+/* 左侧分隔条（Sidebar 与 Workbench） */
 .resizer {
   width: 6px;
-  background: var(--accent-color);
+  background: #333;
   cursor: col-resize;
   flex-shrink: 0;
   transition: background 0.15s;
   height: 100%;
-  z-index: 5;
+  position: relative;
+  z-index: 10;
 }
 
 .resizer:hover {
@@ -271,18 +393,15 @@ function stopResize() {
   display: flex;
   flex-direction: column;
   flex: 1;
-  /* 占剩余空间 */
   min-width: 0;
   background-color: var(--bg-workbench);
 }
 
-
-/* 双面板容器 */
+/* 翻译模式：双面板容器 */
 .dual-pane {
   display: flex;
   flex: 1;
   min-height: 0;
-  /* 必须：让子滚动条正常工作 */
   min-width: 0;
 }
 
@@ -296,13 +415,13 @@ function stopResize() {
 /* 内部分隔条（译文区左侧） */
 .inner-resizer {
   width: 6px;
-  background: var(--border-strong);
+  background: #333;
   cursor: col-resize;
   flex-shrink: 0;
   transition: background 0.15s;
   height: 100%;
-  z-index: 6;
-  /* 保证在内容之上 */
+  position: relative;
+  z-index: 10;
 }
 
 .inner-resizer:hover {
@@ -310,61 +429,10 @@ function stopResize() {
 }
 
 /* 译文区：固定由绑定的宽度控制 */
-/* 译文区外层容器：固定由绑定的宽度控制 */
 .translated-wrapper {
   flex-shrink: 0;
   min-width: 0;
   overflow: hidden;
-  /* 改为hidden，让内部组件处理滚动 */
-}
-
-/* 其余样式略过（保持你原来的） */
-.nav-bar {
-  display: flex;
-  gap: 4px;
-  padding: 8px;
-  background: #252525;
-  border-bottom: 1px solid #333;
-}
-
-.nav-btn {
-  flex: 1;
-  padding: 8px 12px;
-  background: transparent;
-  border: none;
-  color: #999;
-  cursor: pointer;
-  border-radius: 4px;
-  font-size: 14px;
-  transition: all 0.2s;
-}
-
-.nav-btn:hover {
-  background: #333;
-  color: #fff;
-}
-
-.file-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
-
-.file-upload-panel {
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.file-tree {
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
 }
 
 .tools {
@@ -373,25 +441,56 @@ function stopResize() {
   justify-content: flex-start;
 }
 
-.inner-resizer {
-  width: 6px;
-  background: #333;
-  cursor: col-resize;
-  flex-shrink: 0;
-  transition: background 0.15s;
-  height: 100%;
+/* 知识库视图主区域 */
+.rag-view {
+  flex: 1;
+  padding: 16px 20px;
   position: relative;
-  z-index: 10;
+  overflow: auto;
 }
 
-.resizer {
-  width: 6px;
-  background: #333;
-  cursor: col-resize;
-  flex-shrink: 0;
-  transition: background 0.15s;
-  height: 100%;
-  position: relative;
-  z-index: 10;
+.rag-status-indicator {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  background: var(--bg-sidebar);
+  padding: 4px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #67c23a;
+  box-shadow: 0 0 5px #67c23a;
+}
+
+.rag-title {
+  margin: 0 0 4px;
+  font-size: 18px;
+  color: var(--accent-color);
+}
+
+.rag-subtitle {
+  margin: 0 0 16px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.rag-panel {
+  margin-top: 8px;
+}
+
+/* 模型配置视图主区域 */
+.model-view {
+  flex: 1;
+  padding: 16px 20px;
+  overflow: auto;
 }
 </style>

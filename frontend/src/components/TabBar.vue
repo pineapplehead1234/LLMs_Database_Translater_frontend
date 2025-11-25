@@ -31,7 +31,7 @@ function handleCloseTab(taskId: string) { // 定义一个函数，当用户点�
 /* 样式部分，使用 scoped 表示这些样式只作用在本组件内部 */
 .tabbar {
     /* 整个标签栏容器的样式 */
-    height: 40px;
+    height: 32px;
     /* 固定高度为 40 像素 */
     border-bottom: 1px solid #2a2a2a;
     /* 底部加一条深色边框，与下面内容区分开 */
