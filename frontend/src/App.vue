@@ -80,12 +80,7 @@
 
         <!-- 知识库视图侧边栏：预留为数据源/任务列表等 -->
         <template v-else-if="activeView === 'kb'">
-          <div class="sidebar-header">
-            <span>知识库</span>
-          </div>
-          <div class="sidebar-body">
-            <p class="sidebar-tip">在右侧可以执行知识库的导入和删除操作。</p>
-          </div>
+          <KnowledgeBaseSidebar></KnowledgeBaseSidebar>
         </template>
 
         <!-- 模型配置视图侧边栏：可以放快捷说明或留空 -->
@@ -126,18 +121,7 @@
 
         <!-- 知识库管理视图（RAG 管理） -->
         <template v-else-if="activeView === 'kb'">
-          <div class="rag-view">
-            <div class="rag-status-indicator">
-              <span class="status-dot" />
-              <span class="rag-status-text">知识库服务</span>
-            </div>
-            <h2 class="rag-title">知识库管理</h2>
-            <p class="rag-subtitle">在这里执行知识库的构建、追加和删除操作。</p>
-
-            <div class="rag-panel">
-              <DatabaseConfigPanel />
-            </div>
-          </div>
+          <KnowledgeBaseView></KnowledgeBaseView>
         </template>
 
         <!-- 模型配置视图 -->
@@ -153,14 +137,13 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import OriginalPanel from "@/components/OriginalPanel.vue";
-import TranslationPanel from "@/components/TranslationPanel.vue";
-import FileTree from "@/components/FileTree.vue";
-import FileUloadPanel from "@/components/FileUloadPanel.vue";
-import TabBar from "./components/TabBar.vue";
+import OriginalPanel from "@/components/Translate/OriginalPanel.vue";
+import TranslationPanel from "@/components/Translate/TranslationPanel.vue";
+import FileTree from "@/components/Translate/FileTree.vue";
+import FileUloadPanel from "@/components/Translate/FileUloadPanel.vue";
+import TabBar from "./components/Translate/TabBar.vue";
 import { useSegmentScrollSync } from "@/composables/useSegmentScrollSync";
-import ModelConfigPanel from "@/components/ModelConfigPanel.vue";
-import DatabaseConfigPanel from "@/components/DatabseConfigPanel.vue";
+import ModelConfigPanel from "@/components/modelConfig/ModelConfigPanel.vue";
 import { useThemeStore } from "@/stores/themestore";
 import {
   Sunny,
@@ -171,6 +154,9 @@ import {
   DataLine,
   Setting,
 } from "@element-plus/icons-vue";
+import KnowledgeBaseView from "@/components/KnowledgeBase/KnowledgeBaseView.vue";
+import c from "./components/KnowledgeBase/KnowledgeBaseSidebar.vue";
+import KnowledgeBaseSidebar from "./components/KnowledgeBase/KnowledgeBaseSidebar.vue";
 
 const originalRef = ref<any>(null);
 const translatedRef = ref<any>(null);
@@ -439,52 +425,6 @@ function stopResize() {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-}
-
-/* 知识库视图主区域 */
-.rag-view {
-  flex: 1;
-  padding: 16px 20px;
-  position: relative;
-  overflow: auto;
-}
-
-.rag-status-indicator {
-  position: absolute;
-  top: 16px;
-  right: 20px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  background: var(--bg-sidebar);
-  padding: 4px 10px;
-  border-radius: 12px;
-  border: 1px solid var(--border-color);
-}
-
-.status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #67c23a;
-  box-shadow: 0 0 5px #67c23a;
-}
-
-.rag-title {
-  margin: 0 0 4px;
-  font-size: 18px;
-  color: var(--accent-color);
-}
-
-.rag-subtitle {
-  margin: 0 0 16px;
-  font-size: 13px;
-  color: var(--text-secondary);
-}
-
-.rag-panel {
-  margin-top: 8px;
 }
 
 /* 模型配置视图主区域 */

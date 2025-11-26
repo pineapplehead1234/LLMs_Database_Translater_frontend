@@ -15,13 +15,26 @@ export const BASE_URL = useMock ? MOCK_BASE_URL : REAL_BASE_URL
 // 是否使用 Mock（用于代码中判断）
 export const IS_MOCK = useMock
 
-// API 端点
+// 翻译相关 API 端点
 export const API_ENDPOINTS = {
   UPLOAD: `${BASE_URL}/api/task/upload`,
   QUERY: `${BASE_URL}/api/task/query`,
   DOWNLOAD_IMAGES: `${BASE_URL}/api/task/download/images`,
   CONFIG: `${BASE_URL}/api/task/config`,
   GET_CONFIG: `${BASE_URL}/api/config`,
+} as const
+
+// 知识库 / RAG 相关 API 端点
+export const RAG_ENDPOINTS = {
+  HEALTH: `${BASE_URL}/health`,
+  RERANK: `${BASE_URL}/rerank`,
+  INDEX: `${BASE_URL}/index`,
+  DESTROY: `${BASE_URL}/destroy`,
+  DELETE: `${BASE_URL}/delete`,
+  TASKS_BUILD: `${BASE_URL}/tasks/build`,
+  TASKS_ADD: `${BASE_URL}/tasks/add`,
+  TASK_STATUS: `${BASE_URL}/tasks/id`,
+  TASK_LIST: `${BASE_URL}/tasks/task_list`,
 } as const
 
 // 开发环境日志

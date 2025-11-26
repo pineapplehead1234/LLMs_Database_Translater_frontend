@@ -11,7 +11,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
-    DatabseConfigPanel: typeof import('./src/components/DatabseConfigPanel.vue')['default']
+    DatabseConfigPanel: typeof import('./src/components/KnowledgeBase/DatabseConfigPanel.vue')['default']
     ElButton: typeof import('element-plus/es')['ElButton']
     ElCol: typeof import('element-plus/es')['ElCol']
     ElContainer: typeof import('element-plus/es')['ElContainer']
@@ -36,11 +36,13 @@ declare module 'vue' {
     ElTooltip: typeof import('element-plus/es')['ElTooltip']
     ElTree: typeof import('element-plus/es')['ElTree']
     ElUpload: typeof import('element-plus/es')['ElUpload']
-    FileTree: typeof import('./src/components/FileTree.vue')['default']
-    FileUloadPanel: typeof import('./src/components/FileUloadPanel.vue')['default']
-    ModelConfigPanel: typeof import('./src/components/ModelConfigPanel.vue')['default']
-    OriginalPanel: typeof import('./src/components/OriginalPanel.vue')['default']
-    TabBar: typeof import('./src/components/TabBar.vue')['default']
-    TranslationPanel: typeof import('./src/components/TranslationPanel.vue')['default']
+    FileTree: typeof import('./src/components/Translate/FileTree.vue')['default']
+    FileUloadPanel: typeof import('./src/components/Translate/FileUloadPanel.vue')['default']
+    KnowledgeBaseSidebar: typeof import('./src/components/KnowledgeBase/KnowledgeBaseSidebar.vue')['default']
+    KnowledgeBaseView: typeof import('./src/components/KnowledgeBase/KnowledgeBaseView.vue')['default']
+    ModelConfigPanel: typeof import('./src/components/modelConfig/ModelConfigPanel.vue')['default']
+    OriginalPanel: typeof import('./src/components/Translate/OriginalPanel.vue')['default']
+    TabBar: typeof import('./src/components/Translate/TabBar.vue')['default']
+    TranslationPanel: typeof import('./src/components/Translate/TranslationPanel.vue')['default']
   }
 }
