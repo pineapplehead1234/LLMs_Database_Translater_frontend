@@ -46,12 +46,14 @@ export default defineConfig(({ mode }) => {
         '/apiA': {
           target: BACKEND_TAN,
           changeOrigin: true,
-          rewrite: p => p.replace(/^\/apiA/, '')
+          rewrite: p => p.replace(/^\/apiA/, ''),
+          headers: { 'ngrok-skip-browser-warning': '1' }// 👈 加这一行
         },
         '/rag': {
           target: BACKEND_RAG,
           changeOrigin: true,
-          rewrite: p => p.replace(/^\/rag/, '')
+          rewrite: p => p.replace(/^\/rag/, ''),
+          headers: { 'ngrok-skip-browser-warning': '1' }// 如果 rag 也走 ngrok，也加
         },
       },
     },

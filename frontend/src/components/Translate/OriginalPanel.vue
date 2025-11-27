@@ -341,8 +341,9 @@ defineExpose({
   width: 100%;
   overflow-y: auto;
   padding: 16px;
-  background: #1e1e1e;
-  color: #ddd;
+  background: var(--editor-bg);
+  border-right: 1px solid var(--editor-border);
+  color: var(--text-primary);
   position: relative;
 }
 
@@ -353,7 +354,7 @@ defineExpose({
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: #666;
+  color: var(--text-secondary);
 
 }
 
@@ -369,7 +370,7 @@ defineExpose({
 
 .empty-hint {
   font-size: 14px;
-  color: #555;
+  color: var(--text-secondary);
 }
 
 /* 分段内容样式 */
@@ -382,8 +383,8 @@ defineExpose({
 
 /* 术语高亮样式 */
 .segment-content :deep(.term-highlight) {
-  background: linear-gradient(to bottom, transparent 60%, rgba(255, 193, 7, 0.3) 60%);
-  border-bottom: 2px dotted #ffc107;
+  background: linear-gradient(to bottom, transparent 60%, var(--term-highlight-bg) 60%);
+  border-bottom: 2px dotted var(--term-highlight-border);
   cursor: default;
   transition: all 0.2s;
   padding: 0 2px;
@@ -391,7 +392,7 @@ defineExpose({
 }
 
 .segment-content :deep(.term-highlight:hover) {
-  background: rgba(255, 193, 7, 0.4);
-  border-bottom-color: #ff9800;
+  background: var(--term-highlight-hover-bg);
+  border-bottom-color: var(--term-highlight-hover-border);
 }
 </style>

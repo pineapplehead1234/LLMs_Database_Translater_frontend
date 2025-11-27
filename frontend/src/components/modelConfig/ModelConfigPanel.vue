@@ -292,7 +292,7 @@ function handleDelete() {
 
 .error-text {
     font-size: 12px;
-    color: #f56c6c;
+    color: var(--el-color-danger, #f56c6c);
     margin-top: 4px;
 }
 

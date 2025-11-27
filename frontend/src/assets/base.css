@@ -17,6 +17,77 @@
 
    /* 强调色（按钮/选中状态） */
    --accent-color: #007acc;
+   --resizer-bg: #333333;
+   --resizer-hover-bg: #007acc;
+
+   /* Activity Bar 相关 */
+   --activity-bg: #ffffff;
+   --activity-item-hover-bg: rgba(0, 0, 0, 0.04);
+   --activity-item-active-bg: rgba(0, 0, 0, 0.06);
+   --activity-item-active-border: var(--accent-color);
+
+   /* 主工作区内容面板 */
+   --panel-bg: #ffffff;
+   --panel-border: #e5e5e5;
+
+   /* 原文编辑区 */
+   --editor-bg: #ffffff;
+   --editor-border: #e5e5e5;
+
+   /* 译文展示区 */
+   --result-bg: #f9fafb;
+   --result-border: #e5e5e5;
+
+   /* 术语高亮 */
+   --term-highlight-bg: rgba(255, 193, 7, 0.3);
+   --term-highlight-border: #ffc107;
+   --term-highlight-hover-bg: rgba(255, 193, 7, 0.4);
+   --term-highlight-hover-border: #ff9800;
+
+   /* 状态点颜色（知识库在线/离线） */
+   --kb-status-online: #67c23a;
+   --kb-status-offline: #f56c6c;
+
+   /* --- Element Plus 主题映射 --- */
+   /* 主色：按钮/开关/选中状态等 */
+   --el-color-primary: var(--accent-color);
+
+   /* 背景：页面 / 普通容器 / 弹窗 */
+   --el-bg-color-page: var(--bg-app);
+   /* 页面整体底色 */
+   --el-bg-color: var(--bg-workbench);
+   /* 普通容器 */
+   --el-bg-color-overlay: var(--panel-bg);
+   /* Dialog / Drawer 背景 */
+
+   /* 文本颜色 */
+   --el-text-color-primary: var(--text-primary);
+   --el-text-color-regular: var(--text-secondary);
+   --el-text-color-secondary: var(--text-secondary);
+
+   /* 边框与分割线 */
+   --el-border-color: var(--border-color);
+   --el-border-color-light: var(--border-color);
+   --el-border-color-lighter: var(--border-strong);
+
+   /* 侧边栏 / 列表项通用状态 */
+   --sidebar-item-hover-bg: rgba(255, 255, 255, 0.04);
+   --sidebar-item-active-bg: rgba(64, 158, 255, 0.15);
+
+   /* 模型标签颜色（保持原设计） */
+   --model-tag-main-bg: rgba(64, 158, 255, 0.2);
+   --model-tag-main-color: #409eff;
+   --model-tag-mt-bg: rgba(103, 194, 58, 0.2);
+   --model-tag-mt-color: #67c23a;
+   --model-tag-general-bg: rgba(255, 255, 255, 0.08);
+   --model-tag-general-color: #aaaaaa;
+
+   /* 上传区域（保持你现在偏深色的设计） */
+   --upload-area-border: #3a3a3a;
+   --upload-area-bg: #1a1a1a;
+   --upload-text-bg: #1a1a1a;
+   --upload-text-color: #d4d4d4;
+   --upload-folder-btn-bg: #1f1f1f;
  }
 
  /* 暗色主题 */
@@ -34,4 +105,111 @@
    --text-secondary: #858585;
 
    --accent-color: #007acc;
+   --resizer-bg: #2b2b2b;
+   --resizer-hover-bg: #409eff;
+   /* 跟 Element Plus 主色接近 */
+
+   --activity-bg: #252525;
+   --activity-item-hover-bg: rgba(255, 255, 255, 0.06);
+   --activity-item-active-bg: rgba(255, 255, 255, 0.1);
+   --activity-item-active-border: var(--accent-color);
+
+   --panel-bg: #1f1f1f;
+   --panel-border: #333333;
+
+   --editor-bg: #1f1f1f;
+   --editor-border: #333333;
+
+   --result-bg: #161616;
+   --result-border: #333333;
+
+   --term-highlight-bg: rgba(250, 204, 21, 0.35);
+   --term-highlight-border: #facc15;
+   --term-highlight-hover-bg: rgba(250, 204, 21, 0.45);
+   --term-highlight-hover-border: #eab308;
+
+   --kb-status-online: #67c23a;
+   /* 可以比亮色略微暗一点 */
+   --kb-status-offline: #f56c6c;
+
+   --sidebar-item-hover-bg: rgba(255, 255, 255, 0.06);
+   --sidebar-item-active-bg: rgba(64, 158, 255, 0.18);
+
+   --model-tag-main-bg: rgba(64, 158, 255, 0.25);
+   --model-tag-main-color: #409eff;
+   --model-tag-mt-bg: rgba(103, 194, 58, 0.25);
+   --model-tag-mt-color: #67c23a;
+   --model-tag-general-bg: rgba(255, 255, 255, 0.08);
+   --model-tag-general-color: #aaaaaa;
+
+   --upload-area-border: #3a3a3a;
+   --upload-area-bg: #1a1a1a;
+   --upload-text-bg: #1a1a1a;
+   --upload-text-color: #d4d4d4;
+   --upload-folder-btn-bg: #1f1f1f;
+ }
+
+ /* 纸质阅读主题：偏米黄色、对比度稍柔和 */
+ :root[data-theme='paper'] {
+   /* 布局背景 */
+   --bg-app: #f3eee2;
+   /* 整体略微偏黄 */
+   --bg-header: #f0ead8;
+   --bg-main: #f3eee2;
+   --bg-sidebar: #f7f1df;
+   --bg-workbench: #fdf8e4;
+
+   /* 分割线 / 拖拽条 */
+   --border-color: #d4c7a7;
+   --border-strong: #c0b394;
+
+   /* 文本 */
+   --text-primary: #433422;
+   /* 深棕色，类似纸书 */
+   --text-secondary: #72624a;
+
+   /* 强调色（按钮/选中状态） */
+   --accent-color: #b7791f;
+   /* 带一点琥珀色的高亮 */
+
+   --resizer-bg: #c0b394;
+   --resizer-hover-bg: #d69e2e;
+
+   --activity-bg: #f7f1df;
+   --activity-item-hover-bg: rgba(0, 0, 0, 0.02);
+   --activity-item-active-bg: rgba(0, 0, 0, 0.05);
+   --activity-item-active-border: var(--accent-color);
+
+   --panel-bg: #fdf8e4;
+   --panel-border: #d4c7a7;
+
+   --editor-bg: #fdf8e4;
+   --editor-border: #d4c7a7;
+
+   --result-bg: #f7f1df;
+   --result-border: #d4c7a7;
+
+   --term-highlight-bg: rgba(217, 119, 6, 0.25);
+   --term-highlight-border: #d97706;
+   --term-highlight-hover-bg: rgba(217, 119, 6, 0.35);
+   --term-highlight-hover-border: #b45309;
+
+   --kb-status-online: #65a30d;
+   --kb-status-offline: #dc2626;
+
+   --sidebar-item-hover-bg: rgba(0, 0, 0, 0.04);
+   --sidebar-item-active-bg: rgba(183, 121, 31, 0.18);
+
+   --model-tag-main-bg: rgba(183, 121, 31, 0.25);
+   --model-tag-main-color: #b7791f;
+   --model-tag-mt-bg: rgba(101, 163, 13, 0.25);
+   --model-tag-mt-color: #65a30d;
+   --model-tag-general-bg: rgba(0, 0, 0, 0.05);
+   --model-tag-general-color: #72624a;
+
+   --upload-area-border: #d4c7a7;
+   --upload-area-bg: #fdf8e4;
+   --upload-text-bg: #fdf8e4;
+   --upload-text-color: #433422;
+   --upload-folder-btn-bg: #f3eee2;
  }

@@ -315,14 +315,14 @@ watch(
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: #67c23a;
-    box-shadow: 0 0 5px #67c23a;
+    background: var(--kb-status-online);
+    box-shadow: 0 0 5px var(--kb-status-online);
 }
 
 /* 未连接时的红色状态点 */
 .status-dot.offline {
-    background: #f56c6c;
-    box-shadow: 0 0 5px #f56c6c;
+    background: var(--kb-status-offline);
+    box-shadow: 0 0 5px var(--kb-status-offline);
 }
 
 .status-text {

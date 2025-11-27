@@ -14,8 +14,8 @@
             <el-tooltip :content="props.syncEnabled ? '已开启同步滚动' : '点击开启同步滚动'">
                 <el-button circle :type="props.syncEnabled ? 'primary' : 'default'" @click="toggleSync">
                     <el-icon>
-                        <Link v-if="props.syncEnabled" />
-                        <SwitchButton v-else />
+                        <AddLocation v-if="props.syncEnabled" />
+                        <DeleteLocation v-else />
                     </el-icon>
                 </el-button>
             </el-tooltip>
@@ -25,7 +25,7 @@
 
 <script setup lang="ts">// 使用 <script setup> 语法，并启用 TypeScript
 import { useTranslationStore } from "@/stores/translationStore"; // 从 stores 路径引入我们刚才修改的翻译 store
-import { Link, SwitchButton } from "@element-plus/icons-vue";
+import { AddLocation, DeleteLocation } from "@element-plus/icons-vue";
 const store = useTranslationStore(); // 创建一个 store 实例，这样模板和下面的函数都可以使用 store 里的数据和方法
 
 function handleClickTab(taskId: string) { // 定义一个函数，当用户点击某个标签时触发，参数是该标签对应的任务 id

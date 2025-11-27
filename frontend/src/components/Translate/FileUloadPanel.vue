@@ -240,6 +240,8 @@ async function upload() {
       const task_id = uploadData.task_id;
       fileItem.task_id = task_id;
       fileItem.status = "processing";
+      // 等 1 秒再开始轮询
+      await new Promise(resolve => setTimeout(resolve, 10000));
 
       await queryTaskProgress(task_id, fileItem);
     } catch (e) {
@@ -258,39 +260,10 @@ async function upload() {
   files.value = []; // 清空原始 File 数组（如果后面有用到，可以保持一致）
   elFilelist.value = []; // 清空 el-upload 控制的文件列表（相当于“把上传控件重置”）
 }
-
+const MAX_QUERY_RETRY = 5;       // 最多轮询/重连 5 次
+const QUERY_INTERVAL = 2000;     // 每次间隔 2 秒
 // 查询任务进度
 async function queryTaskProgress(taskId: string, fileItem: FileWithStatus) {
-  if (IS_MOCK) {
-    const response = await fetch(`${API_ENDPOINTS.QUERY}?task_id=${taskId}`);
-
-    if (!response.ok) {
-      fileItem.status = "error";
-      fileItem.error = `查询失败: ${response.statusText}`;
-      return;
-    }
-    store.setCurrentFile({
-      task_id: taskId,
-      status: "processing",
-      error: null,
-      client_request_id: fileItem.file.name,
-      original_markdown: {},
-      translated_markdown: {},
-      term_annotations: {},
-    });
-
-    const data = await response.json();
-
-    if (data.status === "success") {
-      await cacheAndSetCurrentFile(data, fileItem);
-    } else if (data.status === "error") {
-      fileItem.status = "error";
-      fileItem.error = data.error;
-    } else {
-      fileItem.status = "processing";
-    }
-    return;
-  }
   store.setCurrentFile({
     task_id: taskId,
     status: "processing",
@@ -301,44 +274,50 @@ async function queryTaskProgress(taskId: string, fileItem: FileWithStatus) {
     term_annotations: {},
   });
 
-  const response = await fetch(`${API_ENDPOINTS.QUERY}?taskId=${taskId}`);
-
-  if (!response.body) {
-    fileItem.status = "error";
-    fileItem.error = "无法获取响应流";
-    return;
-  }
-
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-
-  while (true) {
-    const { done, value } = await reader.read();
-
-    if (done) {
-      break;
-    }
-
-    const text = decoder.decode(value);
-    console.log("收到数据:", text);
-
+  for (let attempt = 1; attempt <= MAX_QUERY_RETRY; attempt++) {
     try {
-      const data = JSON.parse(text);
+      const response = await fetch(`${API_ENDPOINTS.QUERY}?task_id=${taskId}`);
+
+      if (!response.ok) {
+        throw new Error(`查询失败: ${response.statusText}`);
+      }
+
+      const data = await response.json();
 
       if (data.status === "success") {
+        // 查询成功：缓存 + 更新状态，然后结束轮询
         await cacheAndSetCurrentFile(data, fileItem);
-        break;
-      } else if (data.status === "error") {
+        return;
+      }
+
+      if (data.status === "error") {
+        // 后端明确返回 error：直接结束轮询
         fileItem.status = "error";
         fileItem.error = data.error;
-        break;
-      } else {
-        fileItem.status = "processing";
+        return;
       }
-    } catch (e) {
-      console.error("解析数据失败:", e, text);
+
+      // 走到这里一般是 data.status === "processing"
+      fileItem.status = "processing";
+      // 不是最后一次尝试，则等待一段时间再查
+      if (attempt < MAX_QUERY_RETRY) {
+        await new Promise(resolve => setTimeout(resolve, QUERY_INTERVAL));
+      }
+    } catch (err) {
+      // 网络异常 / 其他异常：可以认为是“需要重连”的场景
+      if (attempt === MAX_QUERY_RETRY) {
+        fileItem.status = "error";
+        fileItem.error =
+          err instanceof Error ? err.message : String(err);
+        return;
+      }
+      // 不是最后一次，稍等再重试
+      await new Promise(resolve => setTimeout(resolve, QUERY_INTERVAL));
     }
   }
+  // 循环结束仍未 success / error，认为超时
+  fileItem.status = "error";
+  fileItem.error = "查询超时，请稍后重试";
 }
 
 async function cacheAndSetCurrentFile(data: TaskResultData, fileItem: FileWithStatus) {
@@ -370,15 +349,16 @@ function getDocTypeFromFileName(name: string): "md" | "pdf" | "docx" {
 <style scoped>
 /* 拖拽上传区域外观（卡片 + 虚线边框） */
 .upload-area {
-  border: 1px dashed #3a3a3a;
-  background: #1a1a1a;
+  border: 1px dashed var(--upload-area-border);
+  background: var(--upload-area-bg);
   padding: 8px 0;
 }
 
 .upload-text {
   font-size: 14px;
   text-align: center;
-  background: #1a1a1a;
+  background: var(--upload-text-bg);
+  color: var(--upload-text-color);
 }
 
 .file-row {
@@ -411,7 +391,7 @@ function getDocTypeFromFileName(name: string): "md" | "pdf" | "docx" {
 }
 
 .folder-trigger {
-  --el-button-bg-color: #1f1f1f;
+  --el-button-bg-color: var(--upload-folder-btn-bg);
 }
 
 .upload-actions {

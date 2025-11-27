@@ -139,15 +139,15 @@ defineExpose({
 </script>
 
 <style scoped>
-/* 区别2：类名改为 translated-panel */
 .translated-panel {
   height: 100%;
   overflow-y: auto;
   padding: 16px;
-  background: #1a1a1a;
-  /* 区别3：背景色稍微深一点，区分原文和译文 */
-  color: #ddd;
+  background: var(--result-bg);
+  color: var(--text-primary);
   position: relative;
+  border-left: 1px solid var(--result-border);
+  /* 可选：和原文区对应 */
 }
 
 /* 空状态样式 */
@@ -157,7 +157,7 @@ defineExpose({
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 .empty-icon {
@@ -172,7 +172,7 @@ defineExpose({
 
 .empty-hint {
   font-size: 14px;
-  color: #555;
+  color: var(--text-secondary);
 }
 
 /* 临时添加，确保内容可见 */

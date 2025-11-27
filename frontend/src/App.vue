@@ -13,12 +13,13 @@
         <!-- 右侧 4 个按钮 -->
         <el-col :style="{ flex: '0 0 200px' }">
           <div class="window-controls">
-            <!-- 1. 原来的深/暗色切换按钮，放在最前面 -->
-            <el-tooltip :content="isDark ? '切换到日间模式' : '切换到夜间模式'">
-              <el-button circle :type="isDark ? 'primary' : 'default'" @click="isDark = !isDark">
+
+            <el-tooltip :content="themeTooltip">
+              <el-button circle type="default" @click="cycleTheme">
                 <el-icon>
-                  <Moon v-if="isDark" />
-                  <Sunny v-else />
+                  <Sunny v-if="currentTheme === 'light'" />
+                  <Moon v-else-if="currentTheme === 'dark'" />
+                  <View v-else /> <!-- 当前是 paper 时显示纸质图标 -->
                 </el-icon>
               </el-button>
             </el-tooltip>
@@ -140,8 +141,7 @@ import { useThemeStore } from "@/stores/themestore";
 import {
   Sunny,
   Moon,
-  Link,
-  SwitchButton,
+  View,
   DocumentCopy,
   DataLine,
   Setting,
@@ -174,10 +174,18 @@ const startX = ref(0);
 const startWidth = ref(0);
 
 const themeStore = useThemeStore();
-const isDark = computed({
-  get: () => themeStore.theme === "dark",
-  set: (val: boolean) => themeStore.setTheme(val ? "dark" : "light"),
+
+const currentTheme = computed(() => themeStore.theme);
+
+const themeTooltip = computed(() => {
+  if (currentTheme.value === 'light') return '切换到夜间模式';
+  if (currentTheme.value === 'dark') return '切换到纸质阅读模式';
+  return '切换到日间模式';
 });
+
+function cycleTheme() {
+  themeStore.toggleTheme();
+}
 
 // 开始拖动
 function startResize(target: "sidebar" | "translated", event: MouseEvent) {
@@ -325,7 +333,8 @@ function handleClose() {
 /* Activity Bar：最左侧窄栏 */
 .activity-bar {
   width: 48px;
-  background: var(--bg-sidebar);
+  background: var(--activity-bg);
+  /* 用专门的 Activity 背景变量 */
   border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
@@ -348,7 +357,7 @@ function handleClose() {
 
 .activity-item.active {
   color: var(--accent-color);
-  border-left-color: var(--accent-color);
+  border-left-color: var(--activity-item-active-border);
   background-color: rgba(0, 0, 0, 0.04);
 }
 
@@ -422,7 +431,7 @@ function handleClose() {
 /* 左侧分隔条（Sidebar 与 Workbench） */
 .resizer {
   width: 6px;
-  background: #333;
+  background: var(--resizer-bg);
   cursor: col-resize;
   flex-shrink: 0;
   transition: background 0.15s;
@@ -432,7 +441,8 @@ function handleClose() {
 }
 
 .resizer:hover {
-  background: #007acc;
+  background: var(--resizer-hover-bg);
+  /* 从变量读 hover 色 */
 }
 
 /* 工作区：占剩余宽度 */
@@ -462,7 +472,7 @@ function handleClose() {
 /* 内部分隔条（译文区左侧） */
 .inner-resizer {
   width: 6px;
-  background: #333;
+  background: var(--resizer-bg);
   cursor: col-resize;
   flex-shrink: 0;
   transition: background 0.15s;
@@ -472,7 +482,7 @@ function handleClose() {
 }
 
 .inner-resizer:hover {
-  background: #007acc;
+  background: var(--resizer-hover-bg);
 }
 
 /* 译文区：固定由绑定的宽度控制 */

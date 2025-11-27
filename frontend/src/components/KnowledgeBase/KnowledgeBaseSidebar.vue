@@ -176,12 +176,12 @@ async function onDeleteFile(file: { source: string; display_name?: string }) {
 
 /* hover 效果 */
 .kb-file-row:hover {
-    background-color: rgba(255, 255, 255, 0.04);
+    background-color: var(--sidebar-item-hover-bg);
 }
 
 /* 选中状态高亮 */
 .kb-file-row.active {
-    background-color: rgba(64, 158, 255, 0.15);
+    background-color: var(--sidebar-item-active-bg);
 }
 
 /* 文件名：左侧占满 */
