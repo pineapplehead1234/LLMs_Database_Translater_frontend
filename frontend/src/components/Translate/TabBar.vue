@@ -9,12 +9,23 @@
                 ×
             </span>
         </div>
+        <!-- 右侧：同步按钮 -->
+        <div class="tabbar-right">
+            <el-tooltip :content="props.syncEnabled ? '已开启同步滚动' : '点击开启同步滚动'">
+                <el-button circle :type="props.syncEnabled ? 'primary' : 'default'" @click="toggleSync">
+                    <el-icon>
+                        <Link v-if="props.syncEnabled" />
+                        <SwitchButton v-else />
+                    </el-icon>
+                </el-button>
+            </el-tooltip>
+        </div>
     </div>
 </template>
 
 <script setup lang="ts">// 使用 <script setup> 语法，并启用 TypeScript
 import { useTranslationStore } from "@/stores/translationStore"; // 从 stores 路径引入我们刚才修改的翻译 store
-
+import { Link, SwitchButton } from "@element-plus/icons-vue";
 const store = useTranslationStore(); // 创建一个 store 实例，这样模板和下面的函数都可以使用 store 里的数据和方法
 
 function handleClickTab(taskId: string) { // 定义一个函数，当用户点击某个标签时触发，参数是该标签对应的任务 id
@@ -25,6 +36,17 @@ function handleClickTab(taskId: string) { // 定义一个函数，当用户点�
 function handleCloseTab(taskId: string) { // 定义一个函数，当用户点击标签上的关闭按钮时触发
     store.closeTab(taskId); // 调用 store 的 closeTab 函数，关闭这个标签并处理激活状态切换
 } // handleCloseTab 函数结束
+
+const props = defineProps<{
+    syncEnabled: boolean;
+}>();
+const emit = defineEmits<{
+    (e: "update:syncEnabled", value: boolean): void;
+}>();
+
+function toggleSync() {
+    emit("update:syncEnabled", !props.syncEnabled);
+}
 </script>
 
 <style scoped>
@@ -103,5 +125,25 @@ function handleCloseTab(taskId: string) { // 定义一个函数，当用户点�
     /* 鼠标移到关闭按钮上时的样式 */
     opacity: 1;
     /* 悬停时变为完全不透明，提示可以点击 */
+}
+
+.tabbar {
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+}
+
+.tabbar-tabs {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+.tabbar-right {
+    flex-shrink: 0;
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+
 }
 </style>

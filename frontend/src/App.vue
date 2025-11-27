@@ -2,38 +2,35 @@
   <el-container class="app-container">
     <el-header class="app-header">
       <el-row type="flex" align="middle" :gutter="0" class="header-row">
+        <!-- 左侧标题 -->
         <el-col :style="{ flex: '0 0 160px' }">
-          <div class="title">翻译助手</div>
+          <div class="title">ScholarWeaver</div>
         </el-col>
-        <el-col :style="{ flex: '0 0 220px' }">
-          <div class="tools">
-            <el-space :size="8">
-              <!-- 主题切换：浅色 / 深色 -->
-              <el-tooltip :content="isDark ? '切换到日间模式' : '切换到夜间模式'">
-                <el-button circle :type="isDark ? 'primary' : 'default'" @click="isDark = !isDark">
-                  <el-icon>
-                    <Moon v-if="isDark" />
-                    <Sunny v-else />
-                  </el-icon>
-                </el-button>
-              </el-tooltip>
 
-              <!-- 同步滚动：联动 / 取消联动（仅翻译视图有效） -->
-              <el-tooltip :content="syncEnabled ? '已开启同步滚动' : '点击开启同步滚动'">
-                <el-button circle :type="syncEnabled ? 'primary' : 'default'" @click="syncEnabled = !syncEnabled">
-                  <el-icon>
-                    <Link v-if="syncEnabled" />
-                    <SwitchButton v-else />
-                  </el-icon>
-                </el-button>
-              </el-tooltip>
-            </el-space>
-          </div>
-        </el-col>
+        <!-- 中间撑开 -->
         <el-col :style="{ flex: '1 1 auto' }"></el-col>
-        <el-col :style="{ flex: '0 0 100px' }">
-          <div class="kill-all-button">
-            <div class="kill-all-button-text">x</div>
+
+        <!-- 右侧 4 个按钮 -->
+        <el-col :style="{ flex: '0 0 200px' }">
+          <div class="window-controls">
+            <!-- 1. 原来的深/暗色切换按钮，放在最前面 -->
+            <el-tooltip :content="isDark ? '切换到日间模式' : '切换到夜间模式'">
+              <el-button circle :type="isDark ? 'primary' : 'default'" @click="isDark = !isDark">
+                <el-icon>
+                  <Moon v-if="isDark" />
+                  <Sunny v-else />
+                </el-icon>
+              </el-button>
+            </el-tooltip>
+
+            <!-- 2. 类似 VSCode 的 - 按钮 -->
+            <div class="win-btn win-min" @click="handleMinimize">−</div>
+
+            <!-- 3. 类似 VSCode 的 方框 按钮 -->
+            <div class="win-btn win-max" @click="handleToggleMaximize">□</div>
+
+            <!-- 4. 类似 VSCode 的 X 按钮（可以复用你原来的 kill-all 语义） -->
+            <div class="win-btn win-close" @click="handleClose">×</div>
           </div>
         </el-col>
       </el-row>
@@ -85,13 +82,9 @@
 
         <!-- 模型配置视图侧边栏：可以放快捷说明或留空 -->
         <template v-else-if="activeView === 'model'">
-          <div class="sidebar-header">
-            <span>模型配置</span>
-          </div>
-          <div class="sidebar-body">
-            <p class="sidebar-tip">在右侧配置当前使用的模型和参数。</p>
-          </div>
+          <ModelConfigSidebar />
         </template>
+
       </div>
 
       <!-- 左侧分隔条（可拖动） -->
@@ -101,7 +94,7 @@
       <div class="workbench">
         <!-- 翻译工作台 -->
         <template v-if="activeView === 'translate'">
-          <TabBar />
+          <TabBar v-model:syncEnabled="syncEnabled" />
 
           <div class="dual-pane">
             <!-- 原文区：自动填充剩余空间 -->
@@ -136,14 +129,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import OriginalPanel from "@/components/Translate/OriginalPanel.vue";
 import TranslationPanel from "@/components/Translate/TranslationPanel.vue";
 import FileTree from "@/components/Translate/FileTree.vue";
 import FileUloadPanel from "@/components/Translate/FileUloadPanel.vue";
 import TabBar from "./components/Translate/TabBar.vue";
 import { useSegmentScrollSync } from "@/composables/useSegmentScrollSync";
-import ModelConfigPanel from "@/components/modelConfig/ModelConfigPanel.vue";
 import { useThemeStore } from "@/stores/themestore";
 import {
   Sunny,
@@ -155,9 +147,10 @@ import {
   Setting,
 } from "@element-plus/icons-vue";
 import KnowledgeBaseView from "@/components/KnowledgeBase/KnowledgeBaseView.vue";
-import c from "./components/KnowledgeBase/KnowledgeBaseSidebar.vue";
 import KnowledgeBaseSidebar from "./components/KnowledgeBase/KnowledgeBaseSidebar.vue";
-
+import ModelConfigPanel from "@/components/modelConfig/ModelConfigPanel.vue";
+import ModelConfigSidebar from "@/components/modelConfig/ModelConfigSidebar.vue";
+import { useModelConfigStore } from "@/stores/modelConfigStore";
 const originalRef = ref<any>(null);
 const translatedRef = ref<any>(null);
 
@@ -243,6 +236,36 @@ function stopResize() {
   // 拖动结束后，通知两侧 Panel 重新测量段落高度（只影响 Y 轴）
   refreshLayouts();
 }
+
+// 模型配置 store，用于初始化和共享状态
+const modelConfigStore = useModelConfigStore();
+
+// 当切换到模型配置视图时，初始化模型配置（只会真正执行一次）
+watch(
+  activeView,
+  (view) => {
+    if (view === "model") {
+      modelConfigStore.ensureInitialized();
+    }
+  },
+  { immediate: false }
+);
+
+
+function handleMinimize() {
+  // TODO: 浏览器里可以做一些「最小化效果」，比如折叠 sidebar / activity-bar
+  console.log("click minimize");
+}
+
+function handleToggleMaximize() {
+  // TODO: 这里可以切换全屏，或者让 main-content 占满窗口
+  console.log("click maximize / restore");
+}
+
+function handleClose() {
+  // TODO: 这里可以调用你原来的 kill-all 逻辑，或给出确认弹窗
+  console.log("click close");
+}
 </script>
 
 <style scoped>
@@ -259,6 +282,36 @@ function stopResize() {
   margin: 0;
   background-color: var(--bg-header);
   height: 32px;
+}
+
+.window-controls {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
+}
+
+/* 模拟 VSCode 窗口按钮的样式 */
+.win-btn {
+  width: 22px;
+  height: 22px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  user-select: none;
+}
+
+.win-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.win-btn.win-close:hover {
+  background: #c42b1c;
+  color: #fff;
 }
 
 /* 主内容区：Activity Bar + Sidebar + Workbench */
