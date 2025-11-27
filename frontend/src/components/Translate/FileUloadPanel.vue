@@ -3,9 +3,9 @@
   <div class="controls">
     <!-- 模式：按钮式单选 -->
     <el-radio-group v-model="strategy" size="default" class="mode-group">
-      <el-radio-button label="normal">标准</el-radio-button>
-      <el-radio-button label="fast">极速</el-radio-button>
-      <el-radio-button label="thinking">精准</el-radio-button>
+      <el-radio-button value="normal">标准</el-radio-button>
+      <el-radio-button value="fast">极速</el-radio-button>
+      <el-radio-button value="thinking">精准</el-radio-button>
     </el-radio-group>
 
     <!-- 保存到：按钮 + 弹出树 -->
