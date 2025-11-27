@@ -30,7 +30,7 @@
   </div>
 
   <el-upload class="upload-area" drag multiple :auto-upload="false" :file-list="elFilelist" :on-change="onElChange"
-    :on-remove="onElRemove" :show-file-list="false" accept=".pdf,.docx,.md">
+    :on-remove="onElRemove" :show-file-list="false" accept=".pdf,.docx,.md" :disabled="kbStore.isUpdating">
     <div class="upload-text">拖拽文件到这里或点击上传</div>
     <template #tip>
       <div class="el-upload__tip">支持 .pdf / .docx / .md</div>
@@ -63,14 +63,15 @@ import { useTranslationStore } from "@/stores/translationStore";
 import type { FileTreeNode } from "@/stores/translationStore";
 import type { TaskResultData } from "@/utils/taskCache";
 import { prepareTaskImages } from "@/utils/imageCache";
-import { ElMessage } from "element-plus";
+import { buttonTypes, ElMessage } from "element-plus";
+import { useKbStore } from "@/stores/kbStore";
 // 文件上传相关
 const elFilelist = ref<UploadFile[]>([]);
 const files = ref<File[]>([]);
 const loading = ref(false);
 
 const store = useTranslationStore();
-
+const kbStore = useKbStore();
 // 策略选择（翻译模式）
 const strategy = ref<"normal" | "fast" | "thinking">("normal");
 
@@ -196,6 +197,11 @@ function getStatusType(status: FileStatus): "上传中" | "处理中" | "已完�
 
 // 上传函数
 async function upload() {
+  // 知识库正在更新时禁止上传翻译任务
+  if (kbStore.isUpdating) {
+    ElMessage.warning("知识库正在更新，请稍后再上传翻译文件。");
+    return;
+  }
   if (!filesWithStatus.value || filesWithStatus.value.length === 0) return;
   loading.value = true;
 

@@ -347,6 +347,10 @@ function stopResize() {
 .file-upload-panel {
   flex: 0 0 auto;
   padding: 8px 8px 0;
+  position: relative;
+  /* ✅ 新增 */
+  z-index: 2;
+  /* ✅ 新增：让上传区域在上 */
 }
 
 .file-tree {
@@ -356,6 +360,10 @@ function stopResize() {
   display: flex;
   flex-direction: column;
   padding: 8px;
+  position: relative;
+  /* 可选 */
+  z-index: 1;
+  /* 可选：比上传区低 */
 }
 
 /* 左侧分隔条（Sidebar 与 Workbench） */

@@ -1,18 +1,18 @@
 // src/api/config.ts
 
-// 从环境变量读取配置
 const isDev = import.meta.env.DEV
 const useMock = import.meta.env.VITE_USE_MOCK === 'true'
 
-// Mock 服务地址（本地 Mock）- 必须包含完整的基础 URL
-const MOCK_BASE_URL = import.meta.env.VITE_MOCK_BASE_URL || 'http://127.0.0.1:4523/m1/7404747-7137418-6550118'
-// 真实后端地址（使用代理路径）
-const REAL_BASE_URL = '/apiA'
+// 翻译
+const TRANSLATE_MOCK_BASE_URL = import.meta.env.VITE_MOCK_BASE_URL_TRANSLATE
+const TRANSLATE_REAL_BASE_URL = '/apiA'
+const BASE_URL = useMock ? TRANSLATE_MOCK_BASE_URL : TRANSLATE_REAL_BASE_URL
 
-// 根据配置选择基础 URL
-export const BASE_URL = useMock ? MOCK_BASE_URL : REAL_BASE_URL
+// RAG
+const RAG_MOCK_BASE_URL = import.meta.env.VITE_MOCK_BASE_URL_RAG
+const RAG_REAL_BASE_URL = '/rag'
+const RAG_BASE_URL = useMock ? RAG_MOCK_BASE_URL : RAG_REAL_BASE_URL
 
-// 是否使用 Mock（用于代码中判断）
 export const IS_MOCK = useMock
 
 // 翻译相关 API 端点
@@ -26,15 +26,16 @@ export const API_ENDPOINTS = {
 
 // 知识库 / RAG 相关 API 端点
 export const RAG_ENDPOINTS = {
-  HEALTH: `${BASE_URL}/health`,
-  RERANK: `${BASE_URL}/rerank`,
-  INDEX: `${BASE_URL}/index`,
-  DESTROY: `${BASE_URL}/destroy`,
-  DELETE: `${BASE_URL}/delete`,
-  TASKS_BUILD: `${BASE_URL}/tasks/build`,
-  TASKS_ADD: `${BASE_URL}/tasks/add`,
-  TASK_STATUS: `${BASE_URL}/tasks/id`,
-  TASK_LIST: `${BASE_URL}/tasks/task_list`,
+  HEALTH: `${RAG_BASE_URL}/health`,
+  RERANK: `${RAG_BASE_URL}/rerank`,
+  INDEX: `${RAG_BASE_URL}/index`,
+  DESTROY: `${RAG_BASE_URL}/destroy`,
+  DELETE: `${RAG_BASE_URL}/delete`,
+  TASKS_BUILD: `${RAG_BASE_URL}/tasks/build`,
+  TASKS_ADD: `${RAG_BASE_URL}/tasks/add`,
+  TASK_STATUS: `${RAG_BASE_URL}/tasks/id`,
+  TASK_LIST: `${RAG_BASE_URL}/tasks/task_list`,
+  FILES: `${RAG_BASE_URL}/statistic`
 } as const
 
 // 开发环境日志

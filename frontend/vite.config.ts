@@ -13,19 +13,15 @@ export default defineConfig(({ mode }) => {
   // 是否使用 Mock
   const useMock = env.VITE_USE_MOCK === 'true'
 
-  // Mock 服务地址（本地 Mock）
-  const MOCK_BASE_URL = env.VITE_MOCK_BASE_URL || 'http://127.0.0.1:4523/m1/7404747-7137418-6550118'
-
-  // 真实后端地址
-  const REAL_BACKEND = env.VITE_BACKEND_A || 'https://unindexed-inspectingly-malorie.ngrok-free.dev'
 
   // 根据配置选择目标地址
-  const BACKEND = useMock ? MOCK_BASE_URL : REAL_BACKEND
+  const BACKEND_TAN = useMock ? env.VITE_MOCK_BASE_URL_TRANSLATE : env.VITE_BACKEND
+  const BACKEND_RAG = useMock ? env.VITE_MOCK_BASE_URL_RAG : env.VITE_BACKEND
 
   // 开发环境日志
   if (mode === 'development') {
     console.log(`\n🚀 API Mode: ${useMock ? '📡 MOCK (本地)' : '🔌 REAL (真实接口)'}`)
-    console.log(`📍 Backend URL: ${BACKEND}\n`)
+    console.log(`📍 Backend URL: ${env.VITE_BACKEND}\n`)
   }
 
   return {
@@ -48,9 +44,14 @@ export default defineConfig(({ mode }) => {
       strictPort: true,
       proxy: {
         '/apiA': {
-          target: BACKEND,
+          target: BACKEND_TAN,
           changeOrigin: true,
           rewrite: p => p.replace(/^\/apiA/, '')
+        },
+        '/rag': {
+          target: BACKEND_RAG,
+          changeOrigin: true,
+          rewrite: p => p.replace(/^\/rag/, '')
         },
       },
     },
