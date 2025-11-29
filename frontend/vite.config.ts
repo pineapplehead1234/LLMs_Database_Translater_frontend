@@ -25,6 +25,7 @@ export default defineConfig(({ mode }) => {
   }
 
   return {
+    base: mode === 'electron' ? './' : '/',   // ★ 关键修改  
     plugins: [
       vue(),
       vueDevTools(),

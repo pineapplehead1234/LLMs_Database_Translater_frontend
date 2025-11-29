@@ -261,19 +261,16 @@ watch(
 
 
 function handleMinimize() {
-  // TODO: 浏览器里可以做一些「最小化效果」，比如折叠 sidebar / activity-bar
-  console.log("click minimize");
+  (window as any).electronAPI?.minimize?.()
 }
 
 function handleToggleMaximize() {
-  // TODO: 这里可以切换全屏，或者让 main-content 占满窗口
-  console.log("click maximize / restore");
+  (window as any).electronAPI?.toggleMaximize?.()
 }
 
 function handleClose() {
-  // TODO: 这里可以调用你原来的 kill-all 逻辑，或给出确认弹窗
-  console.log("click close");
-}
+  (window as any).electronAPI?.close?.()
+}   
 </script>
 
 <style scoped>
@@ -290,6 +287,8 @@ function handleClose() {
   margin: 0;
   background-color: var(--bg-header);
   height: 32px;
+  -webkit-app-region: drag;
+  /* 整个 header 可拖动 */
 }
 
 .title {
@@ -307,6 +306,8 @@ function handleClose() {
   justify-content: flex-end;
   align-items: center;
   gap: 6px;
+  -webkit-app-region: no-drag;
+  /* 按钮区域不拖动，允许点击 */
 }
 
 /* 让右上角主题图标只显示图标，不要圆形底色 */
@@ -325,6 +326,10 @@ function handleClose() {
   background-color: transparent;
   border-color: transparent;
   box-shadow: none;
+}
+
+.window-controls * {
+  -webkit-app-region: no-drag;
 }
 
 /* 模拟 VSCode 窗口按钮的样式 */

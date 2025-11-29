@@ -1,5 +1,5 @@
 
-const { app, BrowserWindow } = require('electron')
+const { app, BrowserWindow ,ipcMain} = require('electron')
 const path = require('path')
 
 // 开发模式标记：通过 npm script 里的 ELECTRON_DEV 控制
@@ -12,6 +12,9 @@ function createWindow() {
     const win = new BrowserWindow({
         width: 1200,
         height: 800,
+        frame: false,               // 去掉原生边框和标题栏 
+        title:'ScholarWeaver',
+        icon: path.join(__dirname, 'app.ico'), 
         webPreferences: {
             // 预加载脚本：用于暴露少量 API 给前端（目前只是占位）
             preload: path.join(__dirname, 'preload.cjs'),
@@ -20,6 +23,12 @@ function createWindow() {
             nodeIntegration: false
         }
     })
+        // ★ 拦截页面改标题，强制用我们自己的                                                                     
+    win.on('page-title-updated', (event) => {                                                                 
+      event.preventDefault()              // 阻止使用 document.title                                          
+      win.setTitle('ScholarWeaver')       // 始终保持这个标题                                                 
+    })                                                                                                        
+         
 
     if (isDev) {
         // 开发模式：连本地 Vite dev server
@@ -36,6 +45,7 @@ function createWindow() {
  * 应用生命周期
  */
 app.whenReady().then(() => {
+      app.setName('ScholarWeaver')  
     createWindow()
 
     app.on('activate', () => {
@@ -52,3 +62,20 @@ app.on('window-all-closed', () => {
         app.quit()
     }
 })
+
+ipcMain.on('window-minimize', () => {                                                                       
+    const win = BrowserWindow.getFocusedWindow()                                                              
+    if (win) win.minimize()                                                                                   
+  })                                                                                                          
+                                                                                                              
+  ipcMain.on('window-toggle-maximize', () => {                                                                
+    const win = BrowserWindow.getFocusedWindow()                                                              
+    if (!win) return                                                                                          
+    if (win.isMaximized()) win.restore()                                                                      
+    else win.maximize()                                                                                       
+  })                                                                                                          
+                                                                                                              
+  ipcMain.on('window-close', () => {                                                                          
+    const win = BrowserWindow.getFocusedWindow()                                                              
+    if (win) win.close()                                                                                      
+  })       

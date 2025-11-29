@@ -4,7 +4,7 @@
   "main": "electron/main.cjs",
   "build": {
     "appId": "com.yourname.llmtranslator",
-    "productName": "LLM Translator",
+    "productName": "ScholarWeaver",
     "directories": {
       "output": "dist-electron"
     },
@@ -14,7 +14,8 @@
       "package.json"
     ],
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+        "icon": "electron/app.ico" 
     }
   },
   "private": true,
