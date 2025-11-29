@@ -41,7 +41,12 @@
     <el-scrollbar v-if="filesWithStatus.length" class="file-list">
       <div class="file-row" v-for="fileItem in filesWithStatus" :key="fileItem.file.name + fileItem.file.size">
         <div class="file-name">📄 {{ fileItem.file.name }}</div>
-        <el-tag size="small" :type="getStatusType(fileItem.status)" class="file-status">
+        <el-tag
+          size="small"
+          :type="getStatusType(fileItem.status)"
+          class="file-status"
+          :class="getStatusClass(fileItem.status)"
+        >
           {{ getStatusText(fileItem.status) }}
         </el-tag>
       </div>
@@ -164,6 +169,11 @@ function onElChange(_file: UploadFile, fileList: UploadFile[]) {
     const names = rejectedFiles.map((f) => f.name).join("、");
     ElMessage.warning(`以下文件类型不支持：${names}。仅支持 .pdf / .docx / .md`);
   }
+
+  // 有合法文件并且当前不在上传时，自动开始上传
+  if (filesWithStatus.value.length > 0 && !loading.value) {
+    upload();
+  }
 }
 
 function onElRemove(_file: UploadFile, fileList: UploadFile[]) {
@@ -196,6 +206,17 @@ function getStatusType(status: FileStatus): "info" | "warning" | "success" | "da
     error: "danger",
   };
   return typeMap[status] ?? "info";
+}
+
+// 为不同状态附加 class，方便用主题变量精细控制文字颜色
+function getStatusClass(status: FileStatus): string {
+  const map: Record<FileStatus, string> = {
+    pending: "file-status--pending",
+    processing: "file-status--processing",
+    success: "file-status--success",
+    error: "file-status--error",
+  };
+  return map[status] ?? "file-status--pending";
 }
 
 // 上传函数
@@ -413,6 +434,23 @@ function getDocTypeFromFileName(name: string): "md" | "pdf" | "docx" {
 
 .file-status {
   margin-left: auto;
+}
+
+/* 文件状态标签：根据状态 + 主题变量控制文字颜色 */
+.file-status--pending :deep(.el-tag__content) {
+  color: var(--text-secondary);
+}
+
+.file-status--processing :deep(.el-tag__content) {
+  color: var(--accent-color);
+}
+
+.file-status--success :deep(.el-tag__content) {
+  color: var(--kb-status-online);
+}
+
+.file-status--error :deep(.el-tag__content) {
+  color: var(--kb-status-offline);
 }
 
 .controls {
