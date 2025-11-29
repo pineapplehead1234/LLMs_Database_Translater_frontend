@@ -56,6 +56,10 @@
    /* --- Element Plus 主题映射 --- */
    /* 主色：按钮/开关/选中状态等 */
    --el-color-primary: var(--accent-color);
+   --el-color-success: var(--kb-status-online);
+   --el-color-danger: var(--kb-status-offline);
+   --el-color-warning: var(--accent-color);
+   --el-color-info: var(--text-secondary);
 
    /* 背景：页面 / 普通容器 / 弹窗 */
    --el-bg-color-page: var(--bg-app);
@@ -204,6 +208,10 @@
 
    /* Element Plus 变量映射到当前主题的 bg/text */
    --el-color-primary: var(--accent-color);
+   --el-color-success: var(--kb-status-online);
+   --el-color-danger: var(--kb-status-offline);
+   --el-color-warning: var(--accent-color);
+   --el-color-info: var(--text-secondary);
 
    --el-bg-color-page: var(--bg-app);
    --el-bg-color: var(--bg-workbench);
@@ -308,6 +316,10 @@
    /* 深灰文字 */
 
    --el-color-primary: var(--accent-color);
+   --el-color-success: var(--kb-status-online);
+   --el-color-danger: var(--kb-status-offline);
+   --el-color-warning: var(--accent-color);
+   --el-color-info: var(--text-secondary);
 
    --el-bg-color-page: var(--bg-app);
    --el-bg-color: var(--bg-workbench);

@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import { ref, computed, watch } from "vue";
 import { API_ENDPOINTS } from "@/api/config";
+import { request } from "@/api/http";
 
 // 前端内部使用的角色枚举
 export type RoleType = "main" | "MT" | "none";
@@ -221,7 +222,7 @@ export const useModelConfigStore = defineStore("modelConfig", () => {
 
     // 从后端 GET /api/config 拉取配置
     async function fetchConfig() {
-        const res = await fetch(API_ENDPOINTS.GET_CONFIG, {
+        const res = await request(API_ENDPOINTS.GET_CONFIG, {
             method: "GET",
         });
 
@@ -293,7 +294,7 @@ export const useModelConfigStore = defineStore("modelConfig", () => {
             llms: backendLlms,
         };
 
-        const res = await fetch(API_ENDPOINTS.CONFIG, {
+        const res = await request(API_ENDPOINTS.CONFIG, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -336,4 +337,3 @@ export const useModelConfigStore = defineStore("modelConfig", () => {
         saveConfig,
     };
 });
-

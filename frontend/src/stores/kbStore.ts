@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { RAG_ENDPOINTS, IS_MOCK } from "@/api/config";
+import { request } from "@/api/http";
 import { file } from "jszip";
 
 // 直接按后端字段定义
@@ -30,7 +31,7 @@ export const useKbStore = defineStore("kb", () => {
     }
     async function checkHealth() {
         try {
-            const res = await fetch(RAG_ENDPOINTS.HEALTH);
+            const res = await request(RAG_ENDPOINTS.HEALTH);
             if (!res.ok) {
                 throw new Error(`HTTP 状态码: ${res.status}`);
             }
@@ -43,7 +44,7 @@ export const useKbStore = defineStore("kb", () => {
     }
 
     async function loadFiles() {
-        const res = await fetch(RAG_ENDPOINTS.FILES);
+        const res = await request(RAG_ENDPOINTS.FILES);
         if (!res.ok) {
             throw new Error(`加载文件列表失败: HTTP ${res.status}`);
         }
@@ -74,7 +75,7 @@ export const useKbStore = defineStore("kb", () => {
         isUpdating.value = true;
         try {
             const url = `${RAG_ENDPOINTS.DESTROY}?remove_dir=${removeDir ? "true" : "false"}`;
-            const res = await fetch(url, {
+            const res = await request(url, {
                 method: "POST",
             });
             if (!res.ok) {
@@ -104,7 +105,7 @@ export const useKbStore = defineStore("kb", () => {
                 ignore_case: false,
             };
 
-            const res = await fetch(RAG_ENDPOINTS.DELETE, {
+            const res = await request(RAG_ENDPOINTS.DELETE, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -137,7 +138,7 @@ export const useKbStore = defineStore("kb", () => {
                 ignore_case: false,
             };
 
-            const res = await fetch(RAG_ENDPOINTS.DELETE, {
+            const res = await request(RAG_ENDPOINTS.DELETE, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -165,7 +166,7 @@ export const useKbStore = defineStore("kb", () => {
                 const form = new FormData();
                 form.append("file", file);
 
-                const res = await fetch(RAG_ENDPOINTS.TASKS_ADD, {
+                const res = await request(RAG_ENDPOINTS.TASKS_ADD, {
                     method: "POST",
                     body: form,
                 });
@@ -185,7 +186,7 @@ export const useKbStore = defineStore("kb", () => {
 
                 const statusUrl = `${RAG_ENDPOINTS.TASK_STATUS}/${taskId}`;
                 while (true) {
-                    const r = await fetch(statusUrl);
+                    const r = await request(statusUrl);
                     if (!r.ok) {
                         throw new Error(`查询任务状态失败: HTTP ${r.status}`);
                     }

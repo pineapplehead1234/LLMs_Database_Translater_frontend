@@ -53,6 +53,7 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import { API_ENDPOINTS, IS_MOCK } from "@/api/config";
+import { request } from "@/api/http";
 import { Folder, ArrowDown } from "@element-plus/icons-vue";
 import type { UploadFile } from "element-plus";
 
@@ -178,23 +179,23 @@ function onElRemove(_file: UploadFile, fileList: UploadFile[]) {
 // 获取状态文本
 function getStatusText(status: FileStatus): string {
   const statusMap: Record<FileStatus, string> = {
-    pending: "上传中",
+    pending: "等待上传",
     processing: "处理中",
     success: "已完成",
     error: "错误",
   };
-  return statusMap[status] || "未知";
+  return statusMap[status] ?? "未知";
 }
 
-// 获取状态标签类型
-function getStatusType(status: FileStatus): "上传中" | "处理中" | "已完成" | "错误" {
-  const typeMap: Record<FileStatus, "上传中" | "处理中" | "已完成" | "错误"> = {
-    pending: "上传中",
-    processing: "处理中",
-    success: "已完成",
-    error: "错误",
+// 获取 Element Plus 的标签类型，配合 base.css 中的主题色
+function getStatusType(status: FileStatus): "info" | "warning" | "success" | "danger" {
+  const typeMap: Record<FileStatus, "info" | "warning" | "success" | "danger"> = {
+    pending: "info",
+    processing: "warning",
+    success: "success",
+    error: "danger",
   };
-  return typeMap[status] || "info";
+  return typeMap[status] ?? "info";
 }
 
 // 上传函数
@@ -222,7 +223,7 @@ async function upload() {
       form.append("strategy", strategy.value);
       form.append("client_request_id", file.name);
 
-      const uploadRes = await fetch(API_ENDPOINTS.UPLOAD, {
+      const uploadRes = await request(API_ENDPOINTS.UPLOAD, {
         method: "POST",
         body: form,
       });
@@ -278,7 +279,9 @@ async function queryTaskProgress(taskId: string, fileItem: FileWithStatus) {
 
   for (let attempt = 1; attempt <= MAX_QUERY_RETRY; attempt++) {
     try {
-      const response = await fetch(`${API_ENDPOINTS.QUERY}?task_id=${taskId}`);
+      const response = await request(
+        `${API_ENDPOINTS.QUERY}?task_id=${taskId}`,
+      );
 
       if (!response.ok) {
         throw new Error(`查询失败: ${response.statusText}`);

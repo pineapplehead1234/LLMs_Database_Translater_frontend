@@ -76,6 +76,7 @@
 import { onMounted, ref, watch, computed } from "vue";
 import { useKbStore } from "@/stores/kbStore";
 import { RAG_ENDPOINTS } from "@/api/config";
+import { request } from "@/api/http";
 //创建kbStore实例
 const kbStore = useKbStore();
 
@@ -145,7 +146,7 @@ async function loadCurrentFilePage(page = 1) {
             `${RAG_ENDPOINTS.INDEX}` +
             `?start_seq=${startSeq}&end_seq=${endSeq}&metadata=true`;
 
-        const res = await fetch(url);
+        const res = await request(url);
         if (!res.ok) {
             throw new Error(`加载索引失败: HTTP ${res.status}`);
         }
@@ -229,7 +230,7 @@ async function loadGlobalPage(page = 1) {
             `${RAG_ENDPOINTS.INDEX}` +
             `?start_seq=${startSeq}&end_seq=${endSeq}&metadata=true`;
 
-        const res = await fetch(url);
+        const res = await request(url);
         if (!res.ok) {
             throw new Error(`加载全部索引失败: HTTP ${res.status}`);
         }

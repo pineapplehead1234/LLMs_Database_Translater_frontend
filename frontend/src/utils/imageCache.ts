@@ -1,5 +1,6 @@
 import JSZip from "jszip";
 import { API_ENDPOINTS, IS_MOCK } from "@/api/config";
+import { request } from "@/api/http";
 import { saveImageBlob, loadImageBlob } from "./taskCache";
 import imagesZipUrl from "@/mock/images.zip?url";
 
@@ -90,7 +91,7 @@ async function prepareImagesFromLocalZip(taskId: string): Promise<boolean> {
         return true;
     }
     //下载并解压
-    const response = await fetch(imagesZipUrl);
+    const response = await request(imagesZipUrl);
     if (!response.ok) {
         console.error("无法下载图片zip文件:", response.statusText);
         return false;
@@ -112,7 +113,7 @@ type DownloadImagesJson =
 // 返回值表示本次是否“真正成功”地准备好了图片
 async function prepareImagesFromApi(taskId: string): Promise<boolean> {
     const url = `${API_ENDPOINTS.DOWNLOAD_IMAGES}?task_id=${encodeURIComponent(taskId)}`;
-    const response = await fetch(url);
+    const response = await request(url);
     if (!response.ok) {
         console.error("无法下载任务图片 zip 文件:", response.statusText);
         return false;
