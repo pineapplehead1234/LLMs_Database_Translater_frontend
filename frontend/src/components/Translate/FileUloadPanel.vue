@@ -40,13 +40,9 @@
 
     <el-scrollbar v-if="filesWithStatus.length" class="file-list">
       <div class="file-row" v-for="fileItem in filesWithStatus" :key="fileItem.file.name + fileItem.file.size">
-        <div class="file-name">📄 {{ fileItem.file.name }}</div>
-        <el-tag
-          size="small"
-          :type="getStatusType(fileItem.status)"
-          class="file-status"
-          :class="getStatusClass(fileItem.status)"
-        >
+        <div class="file-name">{{ fileItem.file.name }}</div>
+        <el-tag size="small" :type="getStatusType(fileItem.status)" class="file-status"
+          :class="getStatusClass(fileItem.status)">
           {{ getStatusText(fileItem.status) }}
         </el-tag>
       </div>
@@ -57,7 +53,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import { API_ENDPOINTS, IS_MOCK } from "@/api/config";
+import { API_ENDPOINTS } from "@/api/config";
 import { request } from "@/api/http";
 import { Folder, ArrowDown } from "@element-plus/icons-vue";
 import type { UploadFile } from "element-plus";
@@ -66,7 +62,7 @@ import { useTranslationStore } from "@/stores/translationStore";
 import type { FileTreeNode } from "@/stores/translationStore";
 import type { TaskResultData } from "@/utils/taskCache";
 import { prepareTaskImages } from "@/utils/imageCache";
-import { buttonTypes, ElMessage } from "element-plus";
+import { ElMessage } from "element-plus";
 import { useKbStore } from "@/stores/kbStore";
 // 文件上传相关
 const elFilelist = ref<UploadFile[]>([]);
@@ -430,6 +426,7 @@ function getDocTypeFromFileName(name: string): "md" | "pdf" | "docx" {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  color: var(--text-primary);
 }
 
 .file-status {

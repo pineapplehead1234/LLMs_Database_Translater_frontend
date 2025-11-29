@@ -7,7 +7,7 @@
             </el-tabs>
             <div class="kb-status">
                 <span class="status-dot" :class="{ offline: !kbStore.isConnected }" />
-                <span class="rag-status-text">{{ kbStore.isConnected ? "已连接" : "为连接" }}</span>
+                <span class="rag-status-text">{{ kbStore.isConnected ? "已连接" : "未连接" }}</span>
             </div>
         </div>
 
@@ -289,7 +289,11 @@ watch(
 </script>
 
 <style scoped>
-/* 下面这几段样式直接拷贝自 App.vue 里原来的同名 class，保证外观不变 */
+.sidebar-tip {
+    padding: 12px 0;
+    font-size: 13px;
+    color: var(--el-text-color-secondary, #aaaaaa);
+}
 
 /* 知识库视图主区域 */
 .kb-view {
