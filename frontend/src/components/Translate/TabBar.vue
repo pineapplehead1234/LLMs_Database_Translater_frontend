@@ -1,7 +1,15 @@
 <template>
     <div class="tabbar">
-        <div v-for="tab in store.openTabs" :key="tab.task_id" class="tab-item"
-            :class="{ active: tab.task_id === store.activeTaskId }" @click="handleClickTab(tab.task_id)">
+        <div
+            v-for="tab in store.openTabs"
+            :key="tab.task_id"
+            class="tab-item"
+            :class="{ active: tab.task_id === store.activeTaskId }"
+            @click="handleClickTab(tab.task_id)"
+        >
+            <el-icon class="tab-icon">
+                <Document />
+            </el-icon>
             <span class="tab-title">
                 {{ tab.title }}
             </span>
@@ -25,7 +33,7 @@
 
 <script setup lang="ts">// 使用 <script setup> 语法，并启用 TypeScript
 import { useTranslationStore } from "@/stores/translationStore"; // 从 stores 路径引入我们刚才修改的翻译 store
-import { AddLocation, DeleteLocation } from "@element-plus/icons-vue";
+import { AddLocation, DeleteLocation, Document } from "@element-plus/icons-vue";
 const store = useTranslationStore(); // 创建一个 store 实例，这样模板和下面的函数都可以使用 store 里的数据和方法
 
 function handleClickTab(taskId: string) { // 定义一个函数，当用户点击某个标签时触发，参数是该标签对应的任务 id
@@ -82,6 +90,11 @@ function toggleSync() {
 .tab-item.active {
     background: var(--tab-bg-active);
     color: var(--tab-text-color-active)
+}
+
+.tab-icon {
+    font-size: 14px;
+    margin-right: 6px;
 }
 
 .tab-title {

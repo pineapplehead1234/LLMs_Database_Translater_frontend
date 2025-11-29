@@ -292,6 +292,16 @@ function handleClose() {
   height: 32px;
 }
 
+.title {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "Microsoft YaHei", sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--accent-color);
+  white-space: nowrap;
+}
+
 .window-controls {
   display: flex;
   justify-content: flex-end;

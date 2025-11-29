@@ -49,6 +49,81 @@ html { font-size: 16px; }
 
 ---
 
+### 2.5) 主题与颜色变量（仅切背景）
+
+在 Web 和 Electron 中保持“配色逻辑一致”的推荐做法是：
+
+- 所有颜色都用 CSS 变量抽象，不在组件里直接写十六进制；
+- 通过 `html[data-theme="light" | "dark" | "paper"]` 切换主题；
+- 除了背景相关变量按主题切换，其它颜色（如错误色/品牌色）保持原样。
+
+一个最小可复用的配色骨架：
+
+```css
+/* 通用颜色：文字、边框、品牌色等（多数情况下不随主题变化） */
+:root {
+  --text-primary: #222222;
+  --text-secondary: #666666;
+  --border-color: #dddddd;
+  --accent-color: #007acc;
+
+  /* 布局类背景（默认相当于 light） */
+  --bg-app: #f5f5f5;
+  --bg-header: #ffffff;
+  --bg-main: #f0f0f0;
+  --bg-sidebar: #ffffff;
+  --bg-workbench: #ffffff;
+  --activity-bg: #ffffff;
+  --panel-bg: #ffffff;
+  --editor-bg: #ffffff;
+  --result-bg: #f9fafb;
+}
+
+/* 暗色主题：只重写背景相关变量 */
+:root[data-theme='dark'] {
+  --bg-app: #1e1e1e;
+  --bg-header: #000000;
+  --bg-main: #1e1e1e;
+  --bg-sidebar: #252525;
+  --bg-workbench: #1e1e1e;
+  --activity-bg: #252525;
+  --panel-bg: #1f1f1f;
+  --editor-bg: #1f1f1f;
+  --result-bg: #161616;
+}
+
+/* 纸质阅读主题：同样只重写背景相关变量 */
+:root[data-theme='paper'] {
+  --bg-app: #f3eee2;
+  --bg-header: #f0ead8;
+  --bg-main: #f3eee2;
+  --bg-sidebar: #f7f1df;
+  --bg-workbench: #fdf8e4;
+  --activity-bg: #f7f1df;
+  --panel-bg: #fdf8e4;
+  --editor-bg: #fdf8e4;
+  --result-bg: #f7f1df;
+}
+```
+
+组件内部只消费这些变量，不感知当前是哪个主题，例如：
+
+```css
+.app-container  { background: var(--bg-app); }
+.app-header     { background: var(--bg-header); }
+.sidebar        { background: var(--bg-sidebar); }
+.workbench      { background: var(--bg-workbench); }
+.activity-bar   { background: var(--activity-bg); }
+.upload-card    { background: var(--panel-bg); border-color: var(--border-color); }
+```
+
+这样一来：
+- Web 和 Electron 只要共用同一套 CSS 变量，即可保持配色一致；
+- 想新增主题时，只需在 `:root[data-theme=***]` 里覆盖背景变量；
+- 除背景以外的颜色保持“业务原样”，不需要到处同步。
+
+---
+
 ### 3) DPI/系统缩放与页面缩放
 - Electron 使用 Chromium 渲染，和 Chrome 一致。建议固定页面缩放为 1.0，样式层用相对单位适配 100%/125%/150% 系统缩放。
 - 测试时至少覆盖 Windows 显示缩放 100%/125%/150%。
@@ -174,5 +249,4 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helv
 - [ ] 滚动条出现时布局不抖动；表格/列表列宽稳定
 - [ ] 字体与图标在不同 DPI 下视觉一致、未糊
 - [ ] 生产构建后，Electron `loadFile` 能正确加载 CSS 与资源
-
 

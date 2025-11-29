@@ -45,8 +45,13 @@
    --term-highlight-hover-border: #ff9800;
 
    /* 状态点颜色（知识库在线/离线） */
-   --kb-status-online: #67c23a;
-   --kb-status-offline: #f56c6c;
+  --kb-status-online: #67c23a;
+  --kb-status-offline: #f56c6c;
+
+  /* 滚动条 */
+  --scrollbar-track-bg: rgba(0, 0, 0, 0.03);
+  --scrollbar-thumb-bg: rgba(0, 0, 0, 0.18);
+  --scrollbar-thumb-hover-bg: rgba(0, 0, 0, 0.3);
 
    /* --- Element Plus 主题映射 --- */
    /* 主色：按钮/开关/选中状态等 */
@@ -60,15 +65,20 @@
    --el-bg-color-overlay: var(--panel-bg);
    /* Dialog / Drawer 背景 */
 
-   /* 文本颜色 */
-   --el-text-color-primary: var(--text-primary);
-   --el-text-color-regular: var(--text-secondary);
-   --el-text-color-secondary: var(--text-secondary);
+  /* 文本颜色 */
+  --el-text-color-primary: var(--text-primary);
+  --el-text-color-regular: var(--text-secondary);
+  --el-text-color-secondary: var(--text-secondary);
 
-   /* 边框与分割线 */
-   --el-border-color: var(--border-color);
-   --el-border-color-light: var(--border-color);
-   --el-border-color-lighter: var(--border-strong);
+  /* 边框与分割线 */
+  --el-border-color: var(--border-color);
+  --el-border-color-light: var(--border-color);
+  --el-border-color-lighter: var(--border-strong);
+
+  /* 填充色（表格 / 输入等） */
+  --el-fill-color: #f0f2f5;
+  --el-fill-color-light: #f5f7fa;
+  --el-fill-color-blank: var(--panel-bg);
 
    /* 侧边栏 / 列表项通用状态 */
    --sidebar-item-hover-bg: rgba(255, 255, 255, 0.04);
@@ -151,8 +161,13 @@
    --term-highlight-hover-border: #eab308;
 
    --kb-status-online: #67c23a;
-   /* 可以比亮色略微暗一点 */
-   --kb-status-offline: #f56c6c;
+  /* 可以比亮色略微暗一点 */
+  --kb-status-offline: #f56c6c;
+
+  /* 滚动条 */
+  --scrollbar-track-bg: #151515;
+  --scrollbar-thumb-bg: #3a3a3a;
+  --scrollbar-thumb-hover-bg: #4a4a4a;
 
    --sidebar-item-hover-bg: rgba(255, 255, 255, 0.06);
    --sidebar-item-active-bg: rgba(64, 158, 255, 0.18);
@@ -192,29 +207,20 @@
 
    --el-bg-color-page: var(--bg-app);
    --el-bg-color: var(--bg-workbench);
-   --el-bg-color-overlay: var(--panel-bg);
+  --el-bg-color-overlay: var(--panel-bg);
 
-   --el-text-color-primary: var(--text-primary);
-   --el-text-color-regular: var(--text-secondary);
-   --el-text-color-secondary: var(--text-secondary);
+  --el-text-color-primary: var(--text-primary);
+  --el-text-color-regular: var(--text-secondary);
+  --el-text-color-secondary: var(--text-secondary);
 
-   --el-border-color: var(--border-color);
-   --el-border-color-light: var(--border-color);
-   --el-border-color-lighter: var(--border-strong);
-   /* 补 Element Plus 主题映射，让组件颜色跟随当前主题 */
-   --el-color-primary: var(--accent-color);
+  --el-border-color: var(--border-color);
+  --el-border-color-light: var(--border-color);
+  --el-border-color-lighter: var(--border-strong);
 
-   --el-bg-color-page: var(--bg-app);
-   --el-bg-color: var(--bg-workbench);
-   --el-bg-color-overlay: var(--panel-bg);
-
-   --el-text-color-primary: var(--text-primary);
-   --el-text-color-regular: var(--text-secondary);
-   --el-text-color-secondary: var(--text-secondary);
-
-   --el-border-color: var(--border-color);
-   --el-border-color-light: var(--border-color);
-   --el-border-color-lighter: var(--border-strong);
+  /* 填充色（表格 / 输入等） */
+  --el-fill-color: #262626;
+  --el-fill-color-light: #2b2b2b;
+  --el-fill-color-blank: var(--panel-bg);
  }
 
  /* 纸质阅读主题：偏米黄色、对比度稍柔和 */
@@ -265,6 +271,11 @@
    --kb-status-online: #65a30d;
    --kb-status-offline: #dc2626;
 
+  /* 滚动条 */
+  --scrollbar-track-bg: #e3d7c0;
+  --scrollbar-thumb-bg: #c3aa7b;
+  --scrollbar-thumb-hover-bg: #b08d4d;
+
    --sidebar-item-hover-bg: rgba(0, 0, 0, 0.04);
    --sidebar-item-active-bg: rgba(183, 121, 31, 0.18);
 
@@ -306,21 +317,12 @@
    --el-text-color-regular: var(--text-secondary);
    --el-text-color-secondary: var(--text-secondary);
 
-   --el-border-color: var(--border-color);
-   --el-border-color-light: var(--border-color);
-   --el-border-color-lighter: var(--border-strong);
+  --el-border-color: var(--border-color);
+  --el-border-color-light: var(--border-color);
+  --el-border-color-lighter: var(--border-strong);
 
-   --el-color-primary: var(--accent-color);
-
-   --el-bg-color-page: var(--bg-app);
-   --el-bg-color: var(--bg-workbench);
-   --el-bg-color-overlay: var(--panel-bg);
-
-   --el-text-color-primary: var(--text-primary);
-   --el-text-color-regular: var(--text-secondary);
-   --el-text-color-secondary: var(--text-secondary);
-
-   --el-border-color: var(--border-color);
-   --el-border-color-light: var(--border-color);
-   --el-border-color-lighter: var(--border-strong);
+  /* 填充色（表格 / 输入等） */
+  --el-fill-color: #efe5d2;
+  --el-fill-color-light: #f7efe0;
+  --el-fill-color-blank: var(--panel-bg);
  }

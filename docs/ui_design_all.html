@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="theme-dark"> <!-- 默认暗色 -->
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ScholarWeaver - 主题切换演示</title>
+
+    <!-- Element Plus & Vue -->
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css" />
+    <!-- 引入 Element Plus 暗色变量 (用于 Dark 模式兼容) -->
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/theme-chalk/dark/css-vars.css">
+
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/element-plus"></script>
+    <script src="https://unpkg.com/@element-plus/icons-vue"></script>
+
+    <style>
+        /* =================================================================
+           1. CSS 变量定义 (核心配色引擎)
+           ================================================================= */
+
+        /* 通用过渡效果 */
+        body,
+        div,
+        span,
+        input,
+        textarea,
+        .el-card,
+        .sidebar,
+        .activity-bar {
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+
+        /* --- 方案一：现代学术风 (Modern Academic) --- */
+        html.theme-modern {
+            --bg-app: #FFFFFF;
+            /* 应用背景 */
+            --bg-header: #F0F2F5;
+            /* 顶部标题栏，对应实际应用里的 --bg-header */
+            --activity-bg: #E2E8F0;
+            /* 左侧活动栏，对应 --activity-bg */
+            --bg-sidebar: #F7F9FC;
+            /* 侧边栏 */
+            --editor-bg: #FFFFFF;
+            /* 原文/设置背景，对应 --editor-bg */
+            --result-bg: #F7F9FC;
+            /* 译文背景，对应 --result-bg */
+            --panel-bg: #FFFFFF;
+            /* 表单/卡片背景，对应 --panel-bg */
+
+            --text-primary: #333333;
+            /* 主要文字 */
+            --text-secondary: #666666;
+            /* 次要文字 */
+            --border-color: #E2E8F0;
+            /* 边框 */
+
+            --accent-color: #2B6CB0;
+            /* 强调色 (学术蓝) */
+            --highlight-bg: #EBF8FF;
+            /* 选中高亮 */
+            --code-bg: #2D3748;
+            /* 代码块背景 (深色阅读体验好) */
+            --code-text: #E2E8F0;
+
+            /* Element Plus 覆盖 */
+            --el-color-primary: #2B6CB0;
+            --el-bg-color: #FFFFFF;
+            --el-text-color-primary: #333333;
+            --el-border-color: #E2E8F0;
+            --el-fill-color-blank: #FFFFFF;
+        }
+
+        /* --- 方案二：护眼沉浸风 (Warm Focus) --- */
+        html.theme-warm {
+            --bg-app: #FDFbf7;
+            /* 米黄 */
+            --bg-header: #F0E6D2;
+            /* 稍深的暖色，对应 --bg-header */
+            --activity-bg: #E8DCC0;
+            /* 活动栏，对应 --activity-bg */
+            --bg-sidebar: #FAF5EB;
+            /* 侧边栏 */
+            --editor-bg: #FDFbf7;
+            /* 原文/设置背景，对应 --editor-bg */
+            --result-bg: #FAF5EB;
+            /* 译文背景，对应 --result-bg */
+            --panel-bg: #FFFFFF;
+            /* 表单/卡片背景，对应 --panel-bg */
+
+            --text-primary: #2D3748;
+            /* 暖炭色 */
+            --text-secondary: #744210;
+            /* 赭石色文字 */
+            --border-color: #EDDBC0;
+            /* 暖色边框 */
+
+            --accent-color: #C05621;
+            /* 强调色 (赭石/橙) */
+            --highlight-bg: #F6E05E;
+            /* 高亮 (淡黄) */
+            --code-bg: #F3EADD;
+            /* 再生纸色 */
+            --code-text: #4A5568;
+
+            /* Element Plus 覆盖 */
+            --el-color-primary: #C05621;
+            --el-bg-color: #FDFbf7;
+            --el-text-color-primary: #2D3748;
+            --el-border-color: #EDDBC0;
+            --el-fill-color-blank: #FFFDF5;
+        }
+
+        /* --- 方案三：极客暗黑模式 (Deep Dark) --- */
+        html.theme-dark {
+            --bg-app: #1E1E1E;
+            /* 标准暗色 */
+            --bg-header: #1E1E1E;
+            /* 顶部标题栏，对应 --bg-header */
+            --activity-bg: #333333;
+            /* 活动栏，对应 --activity-bg */
+            --bg-sidebar: #252526;
+            /* 侧边栏 */
+            --editor-bg: #1E1E1E;
+            /* 原文/设置背景，对应 --editor-bg */
+            --result-bg: #181818;
+            /* 译文背景，对应 --result-bg */
+            --panel-bg: #2D2D2D;
+            /* 表单/卡片背景，对应 --panel-bg */
+
+            --text-primary: #D4D4D4;
+            /* 灰白 */
+            --text-secondary: #858585;
+            /* 灰 */
+            --border-color: #333333;
+            /* 深灰边框 */
+
+            --accent-color: #409EFF;
+            /* VS Code Blue */
+            --highlight-bg: #264F78;
+            /* 深蓝高亮 */
+            --code-bg: #0E0E0E;
+            /* 极黑 */
+            --code-text: #CE9178;
+            /* 橙红 */
+
+            /* Element Plus 覆盖 */
+            --el-color-primary: #409EFF;
+            --el-bg-color: #1E1E1E;
+            --el-text-color-primary: #D4D4D4;
+            --el-border-color: #333333;
+            --el-fill-color-blank: #2D2D2D;
+        }
+
+        /* =================================================================
+           2. 布局样式 (复用之前的 Layout)
+           ================================================================= */
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            background: var(--bg-app);
+            color: var(--text-primary);
+        }
+
+        #app {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        /* Title Bar */
+        .title-bar {
+            height: 36px;
+            background: var(--bg-header);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 10px;
+            user-select: none;
+        }
+
+        .window-controls {
+            display: flex;
+            height: 100%;
+            align-items: center;
+            gap: 0;
+        }
+
+        .win-btn {
+            width: 40px;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+
+        .win-btn:hover {
+            background: rgba(128, 128, 128, 0.1);
+        }
+
+        .win-btn.close:hover {
+            background: #E81123;
+            color: white;
+        }
+
+        /* Workspace */
+        .workspace {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Activity Bar */
+        .activity-bar {
+            width: 50px;
+            background: var(--activity-bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 10px;
+            border-right: 1px solid var(--border-color);
+            z-index: 10;
+        }
+
+        .activity-item {
+            width: 40px;
+            height: 40px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text-secondary);
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .activity-item.active,
+        .activity-item:hover {
+            color: var(--accent-color);
+            background: rgba(128, 128, 128, 0.1);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 15px;
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            letter-spacing: 0.5px;
+        }
+
+        .file-item {
+            padding: 8px 20px;
+            font-size: 13px;
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-left: 3px solid transparent;
+        }
+
+        .file-item:hover {
+            background: rgba(128, 128, 128, 0.05);
+        }
+
+        .file-item.active {
+            background: rgba(128, 128, 128, 0.08);
+            border-left-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--editor-bg);
+            min-width: 0;
+        }
+
+        /* Tabs */
+        .tabs-header {
+            height: 36px;
+            background: var(--bg-sidebar);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+        }
+
+        .tab-item {
+            padding: 0 15px;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            border-right: 1px solid var(--border-color);
+            cursor: pointer;
+        }
+
+        .tab-item.active {
+            background: var(--bg-editor-original);
+            color: var(--accent-color);
+            border-top: 2px solid var(--accent-color);
+            font-weight: 500;
+        }
+
+        /* Split View (Translation) */
+        .split-view {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .pane {
+            flex: 1;
+            padding: 30px 40px;
+            overflow-y: auto;
+            line-height: 1.8;
+        }
+
+        .pane-en {
+            background: var(--editor-bg);
+            border-right: 1px solid var(--border-color);
+            font-family: 'Georgia', 'Times New Roman', serif;
+            /* 原文衬线体 */
+        }
+
+        .pane-zh {
+            background: var(--result-bg);
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            /* 译文无衬线 */
+        }
+
+        /* Settings View */
+        .settings-view {
+            padding: 30px;
+            background: var(--editor-bg);
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        .config-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            max-width: 800px;
+            margin-bottom: 20px;
+        }
+
+        /* Elements */
+        h1 {
+            font-size: 22px;
+            margin-bottom: 10px;
+            color: var(--text-primary);
+        }
+
+        p {
+            margin-bottom: 16px;
+            text-align: justify;
+        }
+
+        .highlight {
+            background-color: var(--highlight-bg);
+            padding: 2px 0;
+        }
+
+        .code-block {
+            background: var(--code-bg);
+            color: var(--code-text);
+            padding: 15px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 12px;
+            margin: 15px 0;
+            border: 1px solid var(--border-color);
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--accent-color);
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+
+        /* Element UI Override Helpers */
+        .el-input__wrapper {
+            background-color: var(--panel-bg) !important;
+            box-shadow: 0 0 0 1px var(--border-color) inset !important;
+        }
+
+        .el-input__inner {
+            color: var(--text-primary) !important;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div id="app">
+        <!-- 顶部标题栏 -->
+        <div class="title-bar">
+            <div style="font-weight: bold; font-size: 13px; display: flex; align-items: center; gap: 8px;">
+                <el-icon :color="'var(--accent-color)'" size="16">
+                    <Reading />
+                </el-icon>
+                ScholarWeaver
+            </div>
+
+            <div class="window-controls">
+                <!-- 主题切换器 -->
+                <el-dropdown trigger="click" @command="handleThemeChange">
+                    <div class="win-btn" style="width: auto; padding: 0 10px; font-size: 12px; gap: 6px;">
+                        <el-icon>
+                            <Brush />
+                        </el-icon>
+                        {{ currentThemeLabel }}
+                        <el-icon><Arrow-Down /></el-icon>
+                    </div>
+                    <template #dropdown>
+                        <el-dropdown-menu>
+                            <el-dropdown-item command="theme-modern">
+                                <span style="color: #2B6CB0; font-weight: bold">●</span> 现代学术 (Light)
+                            </el-dropdown-item>
+                            <el-dropdown-item command="theme-warm">
+                                <span style="color: #C05621; font-weight: bold">●</span> 护眼沉浸 (Warm)
+                            </el-dropdown-item>
+                            <el-dropdown-item command="theme-dark">
+                                <span style="color: #409EFF; font-weight: bold">●</span> 极客暗黑 (Dark)
+                            </el-dropdown-item>
+                        </el-dropdown-menu>
+                    </template>
+                </el-dropdown>
+
+                <div class="win-btn"><el-icon>
+                        <Minus />
+                    </el-icon></div>
+                <div class="win-btn close"><el-icon>
+                        <Close />
+                    </el-icon></div>
+            </div>
+        </div>
+
+        <!-- 主体区域 -->
+        <div class="workspace">
+
+            <!-- 左侧活动栏 -->
+            <div class="activity-bar">
+                <div class="activity-item" :class="{active: view === 'read'}" @click="view='read'"><el-icon size="20">
+                        <Document />
+                    </el-icon></div>
+                <div class="activity-item" :class="{active: view === 'settings'}" @click="view='settings'"><el-icon
+                        size="20">
+                        <Setting />
+                    </el-icon></div>
+            </div>
+
+            <!-- 侧边栏 -->
+            <div class="sidebar">
+                <div class="sidebar-header">Files / Models</div>
+                <div class="file-item active"><el-icon>
+                        <Document />
+                    </el-icon> Attention_Is_All_You_Need.pdf</div>
+                <div class="file-item"><el-icon>
+                        <Document />
+                    </el-icon> ResNet_Deep_Learning.pdf</div>
+                <div class="file-item"><el-icon>
+                        <Connection />
+                    </el-icon> GPT-4o Configuration</div>
+            </div>
+
+            <!-- 内容编辑器 -->
+            <div class="main-content">
+
+                <!-- 视图：阅读模式 -->
+                <template v-if="view === 'read'">
+                    <div class="tabs-header">
+                        <div class="tab-item active">Attention_Is_All_You_Need.pdf <el-icon style="margin-left:5px">
+                                <Close />
+                            </el-icon></div>
+                        <div class="tab-item">ResNet.pdf</div>
+                    </div>
+
+                    <div class="split-view">
+                        <!-- 左侧：原文 -->
+                        <div class="pane pane-en">
+                            <h1>Attention Is All You Need</h1>
+                            <p class="highlight">The dominant sequence transduction models are based on complex
+                                recurrent or convolutional neural networks that include an encoder and a decoder.</p>
+                            <p>We propose a new simple network architecture, the Transformer, based solely on attention
+                                mechanisms, dispensing with recurrence and convolutions entirely.</p>
+                            <div class="code-block">
+
+                                class Transformer(nn.Module):
+                                def **init**(self):
+                                super().**init**()
+                                self.encoder = Encoder()
+                            </div>
+                        </div>
+
+                        <!-- 右侧：译文 -->
+                        <div class="pane pane-zh">
+                            <h1>注意力机制是你所需要的一切</h1>
+                            <p class="highlight">目前主流的序列转换模型主要基于复杂的循环神经网络或卷积神经网络，其中包含一个编码器和一个解码器。</p>
+                            <p>我们提出了一种新的简单网络架构——Transformer，它完全基于注意力机制，彻底摒弃了循环和卷积结构。</p>
+                            <div class="code-block">
+
+                                # 伪代码结构
+
+                                class Transformer(nn.Module):
+                                def **init**(self):
+                                super().**init**() # 初始化编码器
+                                self.encoder = Encoder()
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- 视图：设置模式 (验证表单在不同主题下的表现) -->
+                <template v-if="view === 'settings'">
+                    <div class="settings-view">
+                        <div class="section-title">Model Configuration</div>
+
+                        <div class="config-card">
+                            <el-form label-position="top" size="small">
+                                <el-form-item label="Model Name">
+                                    <el-input model-value="tencent/Hunyuan-MT-7B"></el-input>
+                                </el-form-item>
+
+                                <el-row :gutter="20">
+                                    <el-col :span="12">
+                                        <el-form-item label="API Key">
+                                            <el-input type="password" model-value="sk-xxxxxxxx"></el-input>
+                                        </el-form-item>
+                                    </el-col>
+                                    <el-col :span="12">
+                                        <el-form-item label="Base URL">
+                                            <el-input model-value="https://api.siliconflow.cn/v1"></el-input>
+                                        </el-form-item>
+                                    </el-col>
+                                </el-row>
+
+                                <el-form-item label="Temperature">
+                                    <el-slider :model-value="0.2" :max="1" :step="0.1"></el-slider>
+                                </el-form-item>
+
+                                <div style="text-align: right; margin-top: 10px;">
+                                    <el-button>Cancel</el-button>
+                                    <el-button type="primary">Save Changes</el-button>
+                                </div>
+                            </el-form>
+                        </div>
+                    </div>
+                </template>
+
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+    const { createApp, ref, computed } = Vue;
+    const { Brush, Minus, Close, Document, Setting, ArrowDown, Reading, Connection } = ElementPlusIconsVue;
+
+    const app = createApp({
+        setup() {
+            const view = ref('read');
+            const currentTheme = ref('theme-dark');
+
+            const themeLabels = {
+                'theme-modern': '现代学术',
+                'theme-warm': '护眼沉浸',
+                'theme-dark': '极客暗黑'
+            };
+
+            const currentThemeLabel = computed(() => themeLabels[currentTheme.value]);
+
+            const handleThemeChange = (command) => {
+                // 1. 更新 Vue 状态
+                currentTheme.value = command;
+                
+                // 2. 替换 HTML 根节点的 class
+                document.documentElement.className = command;
+
+                // 3. 处理 Element Plus 的暗黑模式兼容性
+                // 如果是 dark 主题，需要添加 dark 类名以激活 Element 自带的暗色组件样式
+                if (command === 'theme-dark') {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            };
+
+            return {
+                view,
+                currentTheme,
+                currentThemeLabel,
+                handleThemeChange
+            };
+        }
+    });
+
+    const icons = { Brush, Minus, Close, Document, Setting, ArrowDown, Reading, Connection };
+    for (const [key, component] of Object.entries(icons)) {
+        app.component(key, component);
+    }
+
+    app.use(ElementPlus);
+    app.mount('#app');
+    </script>
+
+</body>
+
+</html>

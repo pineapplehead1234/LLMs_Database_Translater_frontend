@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>模型配置 - Settings</title>
+
+    <!-- Element Plus & Vue -->
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css" />
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/theme-chalk/dark/css-vars.css">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/element-plus"></script>
+    <script src="https://unpkg.com/@element-plus/icons-vue"></script>
+
+    <style>
+        /* =========================================
+           配色变量 (复用之前的系统)
+           ========================================= */
+        :root {
+            --bg-app: #1E1E1E;
+            --bg-sidebar: #252526;
+            --bg-editor: #1E1E1E;
+            --border-color: #333333;
+            --text-primary: #CCCCCC;
+            --text-secondary: #858585;
+            --accent-color: #409EFF;
+            --card-bg: #2D2D2D;
+        }
+
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: var(--bg-app);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #app {
+            display: flex;
+            height: 100%;
+            flex-direction: column;
+        }
+
+        /* 顶部标题栏 */
+        .title-bar {
+            height: 35px;
+            background: var(--bg-sidebar);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 15px;
+            font-size: 12px;
+            user-select: none;
+        }
+
+        /* 布局框架 */
+        .workspace {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* 左侧活动栏 */
+        .activity-bar {
+            width: 48px;
+            background: #333333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 10px;
+            border-right: 1px solid var(--border-color);
+        }
+
+        .activity-item {
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .activity-item.active {
+            color: #FFF;
+            border-left: 2px solid var(--accent-color);
+        }
+
+        /* 设置页面布局 */
+        .settings-container {
+            flex: 1;
+            display: flex;
+            background: var(--bg-editor);
+        }
+
+        /* 左侧：模型列表 */
+        .model-list-panel {
+            width: 260px;
+            background: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            padding: 15px;
+            font-size: 11px;
+            font-weight: bold;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .model-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .model-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-left: 3px solid transparent;
+            transition: background 0.2s;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .model-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .model-item.active {
+            background: rgba(64, 158, 255, 0.1);
+            border-left-color: var(--accent-color);
+        }
+
+        .model-name {
+            font-size: 13px;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .model-tag {
+            font-size: 10px;
+            padding: 1px 4px;
+            border-radius: 3px;
+            display: inline-block;
+            width: fit-content;
+        }
+
+        .tag-main {
+            background: rgba(64, 158, 255, 0.2);
+            color: #409EFF;
+        }
+
+        .tag-mt {
+            background: rgba(103, 194, 58, 0.2);
+            color: #67C23A;
+        }
+
+        /* 右侧：表单编辑区 */
+        .config-editor {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .editor-header {
+            height: 50px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+            background: var(--bg-sidebar);
+        }
+
+        .editor-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px;
+            max-width: 900px;
+            margin: 0 auto;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* 分组卡片样式 */
+        .config-group {
+            margin-bottom: 30px;
+        }
+
+        .group-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--accent-color);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .full-width {
+            grid-column: span 2;
+        }
+
+        /* Element Plus 覆盖 */
+        .el-form-item__label {
+            color: var(--text-secondary);
+        }
+
+        .el-input__wrapper,
+        .el-textarea__inner {
+            background-color: var(--card-bg);
+            box-shadow: 0 0 0 1px var(--border-color) inset;
+            color: var(--text-primary);
+        }
+
+        .el-card {
+            background-color: var(--bg-sidebar);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="app">
+        <!-- 标题栏 -->
+        <div class="title-bar">
+            <span>Settings - Model Configuration</span>
+            <div style="display: flex; gap: 10px;">
+                <el-icon style="cursor: pointer">
+                    <Minus />
+                </el-icon>
+                <el-icon style="cursor: pointer">
+                    <Close />
+                </el-icon>
+            </div>
+        </div>
+
+        <div class="workspace">
+            <!-- 活动栏 -->
+            <div class="activity-bar">
+                <div class="activity-item"><el-icon>
+                        <Document />
+                    </el-icon></div>
+                <div class="activity-item active"><el-icon>
+                        <Setting />
+                    </el-icon></div>
+            </div>
+
+            <!-- 设置页面 -->
+            <div class="settings-container">
+
+                <!-- 左侧：模型列表 -->
+                <div class="model-list-panel">
+                    <div class="panel-header">
+                        <span>Configured LLMs</span>
+                        <el-button type="primary" link icon="Plus" size="small" @click="addNewModel"></el-button>
+                    </div>
+                    <div class="model-list">
+                        <div v-for="(item, index) in configData.llms" :key="index" class="model-item"
+                            :class="{ active: currentIndex === index }" @click="selectModel(index)">
+                            <div class="model-name">{{ item.name }}</div>
+                            <!-- 显示标签：Main 或 MT -->
+                            <div class="model-tag" :class="getTypeClass(item.extra_config?.type)">
+                                {{ item.extra_config?.type?.toUpperCase() || 'GENERAL' }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 右侧：编辑表单 -->
+                <div class="config-editor" v-if="currentModel">
+                    <!-- 顶部操作栏 -->
+                    <div class="editor-header">
+                        <div style="font-size: 16px; font-weight: bold;">
+                            Edit: {{ currentModel.name }}
+                        </div>
+                        <div>
+                            <el-button type="danger" plain icon="Delete" @click="deleteModel">Delete Model</el-button>
+                            <el-button type="primary" icon="Check" @click="saveConfiguration" :loading="saving">Save
+                                Changes</el-button>
+                        </div>
+                    </div>
+
+                    <!-- 表单内容 -->
+                    <div class="editor-content">
+                        <el-form :model="currentModel" label-position="top" size="default">
+
+                            <!-- 1. 基础信息 -->
+                            <div class="config-group">
+                                <div class="group-title"><el-icon><info-filled /></el-icon> Basic Information</div>
+                                <div class="form-grid">
+                                    <el-form-item label="Display Name (Custom ID)">
+                                        <el-input v-model="currentModel.name" placeholder="e.g. My-GPT-4"></el-input>
+                                    </el-form-item>
+                                    <el-form-item label="Role Type">
+                                        <el-select v-model="currentModel.extra_config.type" placeholder="Select Type">
+                                            <el-option label="Main (杂货/润色)" value="main"></el-option>
+                                            <el-option label="MT (初步翻译)" value="MT"></el-option>
+                                        </el-select>
+                                    </el-form-item>
+                                </div>
+                            </div>
+
+                            <!-- 2. API 连接 -->
+                            <div class="config-group">
+                                <div class="group-title"><el-icon>
+                                        <Connection />
+                                    </el-icon> API Connection</div>
+                                <div class="form-grid">
+                                    <el-form-item label="Base URL" class="full-width">
+                                        <el-input v-model="currentModel.base_url"
+                                            placeholder="https://api.example.com/v1"></el-input>
+                                    </el-form-item>
+                                    <el-form-item label="Model Name (Provider ID)">
+                                        <el-input v-model="currentModel.model_name"
+                                            placeholder="e.g. gpt-4-turbo"></el-input>
+                                    </el-form-item>
+                                    <el-form-item label="API Key">
+                                        <el-input v-model="currentModel.api_key" show-password placeholder="sk-..."
+                                            type="password"></el-input>
+                                    </el-form-item>
+                                </div>
+                            </div>
+
+                            <!-- 3. 性能参数 -->
+                            <div class="config-group">
+                                <div class="group-title"><el-icon>
+                                        <Odometer />
+                                    </el-icon> Performance & Parameters</div>
+                                <div class="form-grid">
+                                    <el-form-item label="Temperature (Randomness)">
+                                        <div style="display:flex; align-items:center; gap:10px; width: 100%">
+                                            <el-slider v-model="currentModel.temperature" :min="0" :max="1" :step="0.1"
+                                                style="flex:1"></el-slider>
+                                            <span style="width: 30px; text-align: right">{{ currentModel.temperature
+                                                }}</span>
+                                        </div>
+                                    </el-form-item>
+                                    <el-form-item label="Max Concurrency">
+                                        <el-input-number v-model="currentModel.extra_config.max_concurrency" :min="1"
+                                            :max="500"></el-input-number>
+                                    </el-form-item>
+                                    <el-form-item label="RPM (Requests Per Minute)">
+                                        <el-input-number v-model="currentModel.extra_config.rpm" :min="1"
+                                            :max="10000"></el-input-number>
+                                    </el-form-item>
+                                </div>
+                            </div>
+
+                            <!-- 4. 高级配置 (JSON Body) -->
+                            <div class="config-group">
+                                <div class="group-title">
+                                    <el-icon>
+                                        <Cpu />
+                                    </el-icon> Extra Body (Provider Specific)
+                                    <el-tag size="small" type="info" style="margin-left: auto">JSON Object</el-tag>
+                                </div>
+                                <el-form-item class="full-width">
+                                    <!-- 这里用一个 textarea 模拟 JSON 编辑器，实际保存时会 parse -->
+                                    <el-input v-model="currentJsonString" type="textarea" :rows="6" @blur="validateJson"
+                                        placeholder='{ "response_format": { "type": "json_object" } }'
+                                        style="font-family: monospace;"></el-input>
+                                    <div v-if="jsonError" style="color: #F56C6C; font-size: 12px; margin-top: 5px;">
+                                        <el-icon>
+                                            <Warning />
+                                        </el-icon> Invalid JSON format
+                                    </div>
+                                </el-form-item>
+                            </div>
+
+                        </el-form>
+                    </div>
+                </div>
+
+                <!-- 空状态 -->
+                <div class="config-editor" v-else
+                    style="align-items: center; justify-content: center; color: var(--text-secondary);">
+                    <el-empty description="Select a model to edit or create new"></el-empty>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref, computed, onMounted, watch } = Vue;
+        const { Setting, Document, Plus, Delete, Check, InfoFilled, Connection, Odometer, Cpu, Warning, Minus, Close } = ElementPlusIconsVue;
+
+        const app = createApp({
+            setup() {
+                const saving = ref(false);
+                const currentIndex = ref(0);
+
+                // 完整配置数据
+                const configData = ref({
+                    task_type: "change_llms_config",
+                    llms: []
+                });
+
+                // 当前编辑的模型数据的深拷贝 (为了支持表单绑定)
+                const currentModel = ref(null);
+
+                // 专门用于处理 extra_body 的字符串，因为 Textarea 不能直接绑定 Object
+                const currentJsonString = ref("{}");
+                const jsonError = ref(false);
+
+                // 模拟：初始化获取配置
+                onMounted(() => {
+                    // 这里你应该调用后端接口获取数据
+                    // 模拟数据：
+                    const mockData = {
+                        "task_type": "change_llms_config",
+                        "llms": [
+                            {
+                                "name": "GLM-4.5-Flash",
+                                "base_url": "https://open.bigmodel.cn/api/paas/v4",
+                                "api_key": "sk-xxx",
+                                "model_name": "GLM-4.5-Flash",
+                                "temperature": 0.1,
+                                "extra_config": { "max_concurrency": 1, "rpm": 10, "type": "main" },
+                                "extra_body": { "response_format": { "type": "json_object" } }
+                            },
+                            {
+                                "name": "tencent/Hunyuan-MT-7B",
+                                "base_url": "https://api.siliconflow.cn/v1",
+                                "api_key": "sk-xxx",
+                                "model_name": "tencent/Hunyuan-MT-7B",
+                                "temperature": 0.2,
+                                "extra_config": { "max_concurrency": 200, "rpm": 500, "type": "MT" },
+                                "extra_body": {}
+                            }
+                        ]
+                    };
+
+                    configData.value = mockData;
+                    selectModel(0);
+                });
+
+                // 切换模型
+                const selectModel = (index) => {
+                    // 如果之前有修改，应该提示保存（这里省略，直接覆盖）
+                    currentIndex.value = index;
+                    if (configData.value.llms[index]) {
+                        // 深拷贝避免直接修改原数组（直到点保存）
+                        // 实际开发中也可以直接绑定原数组，看交互需求
+                        currentModel.value = JSON.parse(JSON.stringify(configData.value.llms[index]));
+
+                        // 将 extra_body 转为字符串以供编辑
+                        currentJsonString.value = JSON.stringify(currentModel.value.extra_body || {}, null, 4);
+                        jsonError.value = false;
+                    } else {
+                        currentModel.value = null;
+                    }
+                };
+
+                // 校验 JSON 字符串
+                const validateJson = () => {
+                    try {
+                        const obj = JSON.parse(currentJsonString.value);
+                        currentModel.value.extra_body = obj;
+                        jsonError.value = false;
+                    } catch (e) {
+                        jsonError.value = true;
+                    }
+                };
+
+                // 辅助：获取标签颜色
+                const getTypeClass = (type) => {
+                    if (!type) return '';
+                    if (type.toLowerCase() === 'main') return 'tag-main';
+                    if (type.toLowerCase() === 'mt') return 'tag-mt';
+                    return '';
+                };
+
+                // 新增模型
+                const addNewModel = () => {
+                    const newModel = {
+                        "name": "New Model",
+                        "base_url": "",
+                        "api_key": "",
+                        "model_name": "",
+                        "temperature": 0.5,
+                        "extra_config": { "max_concurrency": 5, "rpm": 60, "type": "main" },
+                        "extra_body": {}
+                    };
+                    configData.value.llms.push(newModel);
+                    selectModel(configData.value.llms.length - 1);
+                };
+
+                // 删除模型
+                const deleteModel = () => {
+                    if (confirm(`Delete ${currentModel.value.name}?`)) {
+                        configData.value.llms.splice(currentIndex.value, 1);
+                        if (configData.value.llms.length > 0) {
+                            selectModel(Math.max(0, currentIndex.value - 1));
+                        } else {
+                            currentModel.value = null;
+                        }
+                    }
+                };
+
+                // 保存配置 (构造最终请求)
+                const saveConfiguration = () => {
+                    validateJson();
+                    if (jsonError.value) {
+                        ElementPlus.ElMessage.error('Please fix JSON errors in Extra Body');
+                        return;
+                    }
+
+                    saving.value = true;
+
+                    // 1. 更新本地列表中的数据
+                    configData.value.llms[currentIndex.value] = JSON.parse(JSON.stringify(currentModel.value));
+
+                    // 2. 构造发送给后端的 Payload
+                    const payload = {
+                        task_type: "change_llms_config",
+                        llms: configData.value.llms
+                    };
+
+                    console.log("Saving Payload:", JSON.stringify(payload, null, 2));
+
+                    // 模拟网络请求
+                    setTimeout(() => {
+                        saving.value = false;
+                        ElementPlus.ElMessage.success('Configuration saved successfully');
+                    }, 800);
+                };
+
+                return {
+                    saving, configData, currentIndex, currentModel, currentJsonString, jsonError,
+                    selectModel, getTypeClass, addNewModel, deleteModel, saveConfiguration, validateJson
+                };
+            }
+        });
+
+        const icons = { Setting, Document, Plus, Delete, Check, InfoFilled, Connection, Odometer, Cpu, Warning, Minus, Close };
+        for (const [key, component] of Object.entries(icons)) {
+            app.component(key, component);
+        }
+
+        app.use(ElementPlus);
+        app.mount('#app');
+    </script>
+
+</body>
+
+</html>

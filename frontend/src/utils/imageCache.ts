@@ -102,6 +102,12 @@ async function prepareImagesFromLocalZip(taskId: string): Promise<boolean> {
     return true;
 }
 
+// 建议加一个类型方便约束
+type DownloadImagesJson =
+    | { status: "no_images"; task_id: string | null; error: string | null }
+    | { status: "notfound"; task_id: string | null; error: string | null }
+    | { status: string; task_id: string | null; error: string | null }; // 兜底
+
 // 真实环境: 通过后端 /api/task/download/images?task_id=... 下载 ZIP 再解压
 // 返回值表示本次是否“真正成功”地准备好了图片
 async function prepareImagesFromApi(taskId: string): Promise<boolean> {
@@ -112,8 +118,44 @@ async function prepareImagesFromApi(taskId: string): Promise<boolean> {
         return false;
     }
 
+    const contentType = response.headers.get("content-type") || "";
+
+    // ① JSON 分支：无图片 / 错误
+    if (contentType.includes("application/json")) {
+        let data: DownloadImagesJson;
+        try {
+            data = await response.json();
+        } catch (e) {
+            console.error("[prepareImagesFromApi] 解析 JSON 响应失败:", e);
+            return false;
+        }
+
+        if (data.status === "no_images") {
+            console.log("[prepareImagesFromApi] 当前任务没有图片, 跳过下载", {
+                taskId,
+                data,
+            });
+            // 这里返回 true，表示“已处理完图片（只是没有）”，让 prepareTaskImages 记住这个 taskId
+            return true;
+        }
+
+        if (data.status === "error") {
+            console.error("[prepareImagesFromApi] 后端返回错误:", data.error);
+            return false;
+        }
+
+        console.warn("[prepareImagesFromApi] 未知的 JSON 响应状态:", data);
+        return false;
+    }
+
+    // ② 非 JSON 分支：按 zip 正常处理
     const zipBlob = await response.blob();
-    await prepareImagesFromZipBlob(taskId, zipBlob);
+    try {
+        await prepareImagesFromZipBlob(taskId, zipBlob);
+    } catch (e) {
+        console.error("[prepareImagesFromApi] 解压 zip 失败:", e);
+        return false;
+    }
     return true;
 }
 

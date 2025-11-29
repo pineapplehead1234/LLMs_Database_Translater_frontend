@@ -5,6 +5,10 @@
       <template #default="{ data }">
         <el-dropdown trigger="contextmenu" @command="onNodeCommand($event, data)">
           <span class="custom-node">
+            <el-icon class="node-icon">
+              <Folder v-if="data.type === 'folder'" />
+              <Document v-else />
+            </el-icon>
             <span v-if="editingNodeId !== data.id" class="node-label">
               {{ data.name }}
             </span>
@@ -40,8 +44,7 @@ import { ref, nextTick, onMounted, computed } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { useTranslationStore } from '@/stores/translationStore';
 import type { FileTreeNode } from '@/stores/translationStore';
-import { Plus } from '@element-plus/icons-vue'
-import { da } from 'element-plus/es/locales.mjs';
+import { Plus, Folder, Document } from '@element-plus/icons-vue'
 const store = useTranslationStore();
 
 const treeProps = { label: 'name', children: 'children' };
@@ -224,7 +227,8 @@ function onNodeClick(data: FileTreeNode) {
 .custom-node {
   display: flex;
   align-items: center;
-  width: 100%;
+  flex: 1 1 auto;
+  min-width: 0;
   padding-right: 8px;
   box-sizing: border-box;
 }
@@ -240,6 +244,13 @@ function onNodeClick(data: FileTreeNode) {
 .file-tree :deep(.el-tree-node__content) {
   color: var(--text-primary);
   font-size: 13px;
+  width: 100%;
+}
+
+/* 让整行标签区域占满宽度，根节点加号才能靠最右 */
+.file-tree :deep(.el-tree-node__label) {
+  flex: 1 1 auto;
+  width: 100%;
 }
 
 /* hover 高亮（类似 VSCode 左侧） */

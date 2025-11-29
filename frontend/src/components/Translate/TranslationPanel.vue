@@ -2,7 +2,6 @@
   <div class="translated-panel scroll-container" ref="containerRef">
     <!-- 空状态提示 -->
     <div v-if="!hasContent" class="empty-state">
-      <div class="empty-icon">📝</div>
       <div class="empty-text">暂无译文内容</div>
       <div class="empty-hint">请先上传并翻译文件</div>
     </div>

@@ -3,28 +3,28 @@
     <div class="kb-sidebar">
         <div class="sidebar-header">
             <span>知识库</span>
-        </div>
-        <div class="kb-toolbar">
-            <!--加号-->
-            <el-upload :auto-upload="false" :show-file-list="false" multiple accept=".csv"
-                :disabled="kbStore.isUpdating || !kbStore.isConnected" :on-change="onFilesChange">
-                <el-tooltip content="导入 csv 文件" placement="top">
-                    <el-button circle type="primary" size="small"
-                        :disabled="kbStore.isUpdating || !kbStore.isConnected">
+            <div class="kb-toolbar">
+                <!-- 加号：配色与模型配置一致，primary + link + small -->
+                <el-upload :auto-upload="false" :show-file-list="false" multiple accept=".csv"
+                    :disabled="kbStore.isUpdating || !kbStore.isConnected" :on-change="onFilesChange">
+                    <el-tooltip content="导入 csv 文件" placement="top">
+                        <el-button type="primary" link size="small"
+                            :disabled="kbStore.isUpdating || !kbStore.isConnected">
+                            <el-icon>
+                                <Plus />
+                            </el-icon>
+                        </el-button>
+                    </el-tooltip>
+                </el-upload>
+                <!-- 删除整个知识库：用减号表示，配色与加号一致 -->
+                <el-tooltip content="删除整个知识库" placement="top">
+                    <el-button type="primary" link size="small" @click="onClickDestroy" :disabled="kbStore.isUpdating">
                         <el-icon>
-                            <Plus />
+                            <Minus />
                         </el-icon>
                     </el-button>
                 </el-tooltip>
-            </el-upload>
-            <!--删除整个知识库-->
-            <el-tooltip content="删除整个知识库" placement="top">
-                <el-button circle type="danger" size="small" @click="onClickDestroy" :disabled="kbStore.isUpdating">
-                    <el-icon>
-                        <Delete />
-                    </el-icon></el-button>
-            </el-tooltip>
-
+            </div>
         </div>
         <div class="kb-file-list">
             <p v-if="kbStore.files.length === 0" class="sidebar-tip">请导入csv文件</p>
@@ -42,7 +42,7 @@
     </div>
 </template>
 <script setup lang="ts">
-import { Plus, Delete } from "@element-plus/icons-vue";
+import { Plus, Minus, Delete } from "@element-plus/icons-vue";
 import { onMounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import type { UploadFile } from "element-plus";
@@ -141,6 +141,9 @@ async function onDeleteFile(file: { source: string; display_name?: string }) {
 }
 
 .sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     padding: 8px 12px;
     font-size: 12px;
     font-weight: 600;
@@ -153,26 +156,11 @@ async function onDeleteFile(file: { source: string; display_name?: string }) {
 .kb-toolbar {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 8px 8px;
-    border-bottom: 1px solid var(--border-color);
-}
-
-/* 知识库侧边栏顶部的圆形按钮，只保留图标 */
-.kb-toolbar :deep(.el-button.is-circle) {
-    background-color: transparent;
-    border-color: transparent;
-    box-shadow: none;
+    gap: 4px;
+    /* header 已经有 padding 和下边框，这里不再重复 */
     padding: 0;
-    min-width: auto;
-}
-
-/* 悬停/聚焦时也不要出现底色块 */
-.kb-toolbar :deep(.el-button.is-circle:hover),
-.kb-toolbar :deep(.el-button.is-circle:focus) {
-    background-color: transparent;
-    border-color: transparent;
-    box-shadow: none;
+    border-bottom: none;
+    margin-left: auto;
 }
 
 /* 文件列表外层占位容器（下一步会放真正的列表） */

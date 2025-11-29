@@ -1,7 +1,6 @@
 <template>
   <div class="original-panel scroll-container" ref="containerRef">
     <div v-if="!hasContent" class="empty-state">
-      <div class="empty-icon">📄</div>
       <div class="empty-text">暂无原文内容</div>
       <div class="empty-text">请先上传文件</div>
     </div>

@@ -1,396 +1,332 @@
 <!DOCTYPE html>
-<html lang="zh-CN" class="dark"> <!-- 默认 dark, 去掉就是 light -->
+<html lang="zh-CN" class="dark">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>论文翻译 - 双主题版</title>
+    <title>论文翻译助手 - Pro Layout</title>
 
-    <!-- 引入 Element Plus -->
+    <!-- Element Plus & Vue -->
     <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css" />
     <link rel="stylesheet" href="https://unpkg.com/element-plus/theme-chalk/dark/css-vars.css">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/element-plus"></script>
+    <script src="https://unpkg.com/@element-plus/icons-vue"></script>
 
     <style>
-        /* =================================================================
-           1. 全局变量定义 (Theme Variables)
-           ================================================================= */
-
-        /* --- 亮色模式 (Light - Academic Style) --- */
+        /* =========================================
+           配色系统 (VS Code 风格)
+           ========================================= */
         :root {
-            /* 界面基础色 */
-            --bg-app: #F3F3F3;
-            /* 整体背景 */
-            --bg-sidebar: #F8F9FA;
-            /* 侧边栏背景 */
-            --bg-tab-bar: #F3F3F3;
-            /* Tab栏背景 */
-            --bg-tab-inactive: #ECECEC;
-            /* 未选中 Tab */
+            /* 亮色模式 */
+            --bg-titlebar: #EFEFEF;
+            --bg-activity: #2C2C2C;
+            /* 活动栏通常保持深色或对比色 */
+            --bg-sidebar: #F3F3F3;
+            --bg-editor: #FFFFFF;
+            --bg-tab: #ECECEC;
             --bg-tab-active: #FFFFFF;
-            /* 选中 Tab */
             --border-color: #E4E4E4;
-            /* 分割线 */
-
-            /* 编辑区背景 */
-            --bg-editor-original: #FFFFFF;
-            /* 原文：纯白 */
-            --bg-editor-trans: #FAF9F6;
-            /* 译文：极淡的暖白/米灰 (区分左右) */
-
-            /* 文字颜色 */
-            --text-primary: #24292E;
-            /* 主文字 */
-            --text-secondary: #586069;
-            /* 次要文字 */
+            --text-primary: #333;
+            --text-secondary: #666;
             --accent-color: #007ACC;
-            /* 重点色 (VS Code Blue) */
-
-            /* 列表交互 */
-            --item-hover: #E8E8E8;
-            --item-active: #E4E6F1;
-            /* 选中文件背景 */
-
-            /* --- Markdown 渲染配色 (GitHub/Notion 风格) --- */
-            --md-h1: #2B6CB0;
-            /* 标题蓝 */
-            --md-h2: #C05621;
-            /* 二级标题赭石色 */
-            --md-code-bg: #F6F8FA;
-            /* 代码块浅灰背景 */
-            --md-code-text: #24292E;
-            --md-quote-border: #007ACC;
-            --md-quote-bg: #F0F7FF;
-            --md-active-para: #FFF8C5;
-            /* 选中段落高亮 (淡黄) */
+            --icon-activity: #999;
+            --icon-activity-active: #FFF;
         }
 
-        /* --- 暗色模式 (Dark - VS Code Style) --- */
         html.dark {
-            /* 界面基础色 */
-            --bg-app: #1E1E1E;
+            /* 暗色模式 */
+            --bg-titlebar: #1E1E1E;
+            /* 标题栏与编辑器同色或稍亮 */
+            --bg-activity: #333333;
+            /* 最左侧活动栏 */
             --bg-sidebar: #252526;
-            --bg-tab-bar: #252526;
-            --bg-tab-inactive: #2D2D2D;
+            /* 侧边栏 */
+            --bg-editor: #1E1E1E;
+            /* 编辑器背景 */
+            --bg-tab: #2D2D2D;
             --bg-tab-active: #1E1E1E;
-            --border-color: #333333;
-            /* 稍微明显的分割线 */
-
-            /* 编辑区背景 */
-            --bg-editor-original: #1E1E1E;
-            --bg-editor-trans: #181818;
-            /* 译文：更深邃的黑，增加对比 */
-
-            /* 文字颜色 */
-            --text-primary: #D4D4D4;
+            --border-color: #191919;
+            --text-primary: #CCCCCC;
             --text-secondary: #858585;
-            --accent-color: #007ACC;
-
-            /* 列表交互 */
-            --item-hover: #2A2D2E;
-            --item-active: #37373D;
-
-            /* --- Markdown 渲染配色 (VS Code Dark+ 风格) --- */
-            --md-h1: #569CD6;
-            /* 浅蓝 */
-            --md-h2: #DCDCAA;
-            /* 淡黄 */
-            --md-code-bg: #0E0E0E;
-            /* 极深黑背景 */
-            --md-code-text: #9CDCFE;
-            /* 代码高亮 */
-            --md-quote-border: #007ACC;
-            --md-quote-bg: #222222;
-            --md-active-para: #2B3138;
-            /* 选中段落高亮 (深蓝灰) */
+            --accent-color: #409EFF;
+            /* Element Blue */
+            --icon-activity: #757575;
+            --icon-activity-active: #FFFFFF;
         }
 
-        /* =================================================================
-           2. 基础布局
-           ================================================================= */
         body {
             margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             height: 100vh;
             overflow: hidden;
-            background: var(--bg-app);
+            background: var(--bg-titlebar);
             color: var(--text-primary);
-            transition: background 0.3s, color 0.3s;
-            /* 主题切换动画 */
         }
 
         #app {
             display: flex;
+            flex-direction: column;
             height: 100%;
         }
 
-        /* 侧边栏 */
-        .sidebar {
-            width: 260px;
-            background-color: var(--bg-sidebar);
-            border-right: 1px solid var(--border-color);
+        /* =========================================
+           1. 顶部自定义标题栏 (Window Controls)
+           ========================================= */
+        .title-bar {
+            height: 32px;
+            background: var(--bg-titlebar);
             display: flex;
-            flex-direction: column;
-            user-select: none;
-            transition: background 0.3s;
-        }
-
-        .sidebar-header {
-            padding: 12px 15px;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .sidebar-actions {
-            display: flex;
-            justify-content: space-between;
             align-items: center;
-            margin-bottom: 5px;
+            justify-content: space-between;
+            padding-left: 10px;
+            -webkit-app-region: drag;
+            /* Electron 拖拽窗口 */
+            user-select: none;
+            border-bottom: 1px solid var(--border-color);
         }
 
-        .sidebar-title {
-            font-size: 11px;
+        .app-title {
+            font-size: 12px;
             font-weight: bold;
             color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 1px;
         }
 
-        /* 文件树 */
-        .file-tree {
-            flex: 1;
-            overflow-y: auto;
-            padding-top: 5px;
-        }
-
-        .file-item {
-            padding: 6px 20px;
+        .window-controls {
             display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 13px;
-            color: var(--text-secondary);
-            cursor: pointer;
-            border-left: 3px solid transparent;
-            /* 选中指示条占位 */
-        }
-
-        .file-item:hover {
-            background-color: var(--item-hover);
-            color: var(--text-primary);
-        }
-
-        .file-item.active {
-            background-color: var(--item-active);
-            color: var(--text-primary);
-            border-left-color: var(--accent-color);
-        }
-
-        /* 主区域 */
-        .main-area {
-            flex: 1;
-            display: flex;
-            background-color: var(--bg-app);
-        }
-
-        .split-pane {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            border-right: 1px solid var(--border-color);
-            min-width: 0;
-            transition: background 0.3s;
-        }
-
-        .split-pane:last-child {
-            border-right: none;
-        }
-
-        /* Tabs */
-        .tabs-bar {
-            height: 36px;
-            background-color: var(--bg-tab-bar);
-            display: flex;
-            overflow-x: auto;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .tabs-bar::-webkit-scrollbar {
-            display: none;
-        }
-
-        .tab {
-            display: flex;
-            align-items: center;
-            padding: 0 15px;
             height: 100%;
-            font-size: 13px;
-            color: var(--text-secondary);
-            background-color: var(--bg-tab-inactive);
-            border-right: 1px solid var(--border-color);
+            -webkit-app-region: no-drag;
+        }
+
+        .win-btn {
+            width: 40px;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             cursor: pointer;
-            min-width: 120px;
-            max-width: 200px;
-            position: relative;
+            color: var(--text-secondary);
             transition: background 0.2s;
-        }
-
-        .tab.active {
-            background-color: var(--bg-tab-active);
-            color: var(--text-primary);
-            border-top: 2px solid var(--accent-color);
-            /* 顶部高亮条 */
-        }
-
-        .tab-icon {
-            margin-right: 8px;
             font-size: 14px;
         }
 
-        .tab-label {
+        .win-btn:hover {
+            background: rgba(128, 128, 128, 0.2);
+        }
+
+        .win-btn.close:hover {
+            background: #E81123;
+            color: white;
+        }
+
+        /* =========================================
+           2. 主工作区布局 (Activity + Sidebar + Content)
+           ========================================= */
+        .workspace {
             flex: 1;
-            white-space: nowrap;
+            display: flex;
             overflow: hidden;
-            text-overflow: ellipsis;
         }
 
-        .tab-close {
-            opacity: 0;
-            font-size: 12px;
-            margin-left: 5px;
-            padding: 2px;
-            border-radius: 4px;
+        /* [NEW] 最左侧活动栏 (Activity Bar) */
+        .activity-bar {
+            width: 48px;
+            background: var(--bg-activity);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 10px;
+            border-right: 1px solid var(--border-color);
+            z-index: 10;
         }
 
-        .tab:hover .tab-close {
-            opacity: 1;
+        .activity-item {
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--icon-activity);
+            border-left: 2px solid transparent;
+            /* 选中指示条 */
+            transition: all 0.2s;
         }
 
-        .tab-close:hover {
-            background-color: rgba(128, 128, 128, 0.2);
+        .activity-item:hover {
+            color: var(--icon-activity-active);
         }
 
-        /* 编辑内容区 */
-        .editor-content {
+        .activity-item.active {
+            color: var(--icon-activity-active);
+            border-left-color: var(--accent-color);
+        }
+
+        .activity-item .el-icon {
+            font-size: 24px;
+        }
+
+        /* 第二列侧边栏 (Sidebar) */
+        .sidebar {
+            width: 250px;
+            background: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 10px 15px;
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* 主内容区 (Editor) */
+        .main-content {
             flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-editor);
+            position: relative;
+            min-width: 0;
+        }
+
+        /* =========================================
+           3. Tabs 栏 & 同步按钮
+           ========================================= */
+        .tabs-header {
+            height: 36px;
+            background: var(--bg-sidebar);
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tab-item {
+            padding: 0 15px;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            background: var(--bg-tab);
+            border-right: 1px solid var(--border-color);
+            min-width: 120px;
+        }
+
+        .tab-item.active {
+            background: var(--bg-editor);
+            color: var(--text-primary);
+            border-top: 2px solid var(--accent-color);
+        }
+
+        /* [NEW] 位于 Tab 栏最右侧的工具区 */
+        .tabs-actions {
+            margin-left: auto;
+            /* 核心：把这个区域推到最右边 */
+            display: flex;
+            height: 100%;
+            align-items: center;
+            padding-right: 10px;
+        }
+
+        /* =========================================
+           4. 页面特定样式
+           ========================================= */
+
+        /* 翻译页面 (Split Pane) */
+        .split-view {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .pane {
+            flex: 1;
+            padding: 20px 40px;
             overflow-y: auto;
-            padding: 30px 40px;
-            line-height: 1.7;
             position: relative;
         }
 
-        /* 滚动条美化 */
-        .editor-content::-webkit-scrollbar {
-            width: 10px;
+        .pane-en {
+            border-right: 1px solid var(--border-color);
+            font-family: 'Georgia', serif;
         }
 
-        .editor-content::-webkit-scrollbar-track {
-            background: transparent;
+        .pane-zh {
+            font-family: 'PingFang SC', sans-serif;
+            background: rgba(128, 128, 128, 0.03);
         }
 
-        .editor-content::-webkit-scrollbar-thumb {
-            background: rgba(128, 128, 128, 0.3);
-            border-radius: 5px;
-            border: 3px solid transparent;
-            background-clip: content-box;
+        /* RAG 页面 */
+        .rag-view {
+            padding: 20px;
+            height: 100%;
+            overflow-y: auto;
+            position: relative;
         }
 
-        .editor-content::-webkit-scrollbar-thumb:hover {
-            background-color: rgba(128, 128, 128, 0.5);
+        .rag-status-indicator {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            /* RAG 页面右上角 */
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            background: var(--bg-sidebar);
+            padding: 4px 10px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
         }
 
-        /* =================================================================
-           3. Markdown 渲染样式 (核心部分)
-           ================================================================= */
-
-        /* 字体设定 */
-        .pane-original .editor-content {
-            font-family: 'Georgia', 'Times New Roman', serif;
-            /* 学术衬线体 */
-            background-color: var(--bg-editor-original);
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #67C23A;
+            box-shadow: 0 0 5px #67C23A;
         }
 
-        .pane-trans .editor-content {
-            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
-            /* 现代无衬线体 */
-            background-color: var(--bg-editor-trans);
-        }
-
-        /* 元素样式 */
+        /* 通用样式 */
         h1 {
-            font-size: 1.8em;
-            margin-bottom: 0.6em;
-            color: var(--md-h1);
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 0.3em;
-        }
-
-        h2 {
-            font-size: 1.4em;
-            margin-top: 1.5em;
-            margin-bottom: 0.6em;
-            color: var(--md-h2);
+            margin-top: 0;
+            font-size: 24px;
+            color: var(--accent-color);
         }
 
         p {
-            margin-bottom: 1.2em;
+            line-height: 1.6;
             text-align: justify;
+            margin-bottom: 16px;
         }
 
-        /* 代码块 */
-        pre {
-            background-color: var(--md-code-bg);
-            color: var(--md-code-text);
-            padding: 16px;
-            border-radius: 6px;
-            border: 1px solid var(--border-color);
-            font-family: 'JetBrains Mono', 'Fira Code', monospace;
-            font-size: 0.9em;
-            overflow-x: auto;
-        }
-
-        /* 引用块 */
-        blockquote {
-            margin: 0 0 1.5em 0;
-            padding: 10px 16px;
-            border-left: 4px solid var(--md-quote-border);
-            background-color: var(--md-quote-bg);
+        .file-tree-item {
+            padding: 4px 15px;
+            cursor: pointer;
+            font-size: 13px;
             color: var(--text-secondary);
-            font-style: italic;
-            border-radius: 0 4px 4px 0;
-        }
-
-        /* 核心功能：段落高亮对齐 */
-        .active-paragraph {
-            background-color: var(--md-active-para);
-            padding: 2px 4px;
-            border-radius: 4px;
-            /* 可选：加个左侧指示条 */
-            box-shadow: -4px 0 0 0 var(--accent-color);
-            margin-left: 4px;
-            /* 补偿阴影 */
-        }
-
-        /* 浮动按钮 */
-        .floating-actions {
-            position: absolute;
-            bottom: 30px;
-            right: 30px;
-            z-index: 10;
             display: flex;
-            gap: 10px;
+            align-items: center;
+            gap: 6px;
         }
 
-        /* 标签 */
-        .lang-badge {
-            font-size: 10px;
-            padding: 2px 6px;
-            border-radius: 3px;
-            background: rgba(128, 128, 128, 0.2);
-            color: var(--text-secondary);
-            margin-left: auto;
+        .file-tree-item:hover {
+            background: rgba(128, 128, 128, 0.1);
+            color: var(--text-primary);
+        }
+
+        .file-tree-item.active {
+            background: rgba(64, 158, 255, 0.15);
+            color: var(--accent-color);
         }
     </style>
 </head>
@@ -398,172 +334,217 @@
 <body>
 
     <div id="app">
-        <!-- 左侧边栏 -->
-        <div class="sidebar">
-            <div class="sidebar-header">
-                <div class="sidebar-actions">
-                    <span class="sidebar-title">EXPLORER</span>
-                    <!-- 模式切换开关 -->
-                    <el-switch v-model="isDark" @change="toggleTheme" inline-prompt :active-icon="Moon"
-                        :inactive-icon="Sunny"
-                        style="--el-switch-on-color: #4C4D4F; --el-switch-off-color: #DCDFE6"></el-switch>
-                </div>
+        <!-- 1. 顶部标题栏 + 窗口控制 -->
+        <div class="title-bar">
+            <div class="app-title">PaperTranslator Pro v1.0</div>
 
-                <el-upload action="#" :show-file-list="false" style="width: 100%;">
-                    <el-button type="primary" style="width: 100%;" plain>
-                        <el-icon style="margin-right: 6px"><Upload-Filled /></el-icon> 上传论文 (PDF/MD)
-                    </el-button>
-                </el-upload>
-            </div>
-
-            <div class="sidebar-title" style="padding: 15px 15px 5px;">Project Files</div>
-
-            <div class="file-tree">
-                <div class="file-item active">
-                    <el-icon color="#E6A23C">
-                        <Document />
+            <div class="window-controls">
+                <!-- 主题切换 -->
+                <div class="win-btn" @click="toggleTheme" title="切换主题">
+                    <el-icon>
+                        <component :is="isDark ? 'Sunny' : 'Moon'" />
                     </el-icon>
-                    <span>Attention_Is_All_You_Need.pdf</span>
                 </div>
-                <div class="file-item">
-                    <el-icon color="#409eff">
-                        <Document />
+                <!-- 挂后台 (Minimize) -->
+                <div class="win-btn" title="最小化/后台运行">
+                    <el-icon>
+                        <Minus />
                     </el-icon>
-                    <span>ResNet_Deep_Learning.pdf</span>
                 </div>
-                <div class="file-item">
-                    <el-icon color="#67c23a">
-                        <Document />
+                <!-- 关闭 (Close) -->
+                <div class="win-btn close" title="关闭程序">
+                    <el-icon>
+                        <Close />
                     </el-icon>
-                    <span>BERT_Pretraining.docx</span>
                 </div>
             </div>
         </div>
 
-        <!-- 主内容区 -->
-        <div class="main-area">
+        <!-- 2. 主体工作区 -->
+        <div class="workspace">
 
-            <!-- 左侧：原文 -->
-            <div class="split-pane pane-original">
-                <div class="tabs-bar">
-                    <div class="tab active">
-                        <el-icon class="tab-icon" color="#E6A23C">
-                            <Document />
+            <!-- A. [最左侧] Activity Bar -->
+            <div class="activity-bar">
+                <!-- 翻译模式 -->
+                <div class="activity-item" :class="{ active: currentView === 'translate' }"
+                    @click="currentView = 'translate'" title="文档翻译">
+                    <el-icon><Document-Copy /></el-icon>
+                </div>
+                <!-- RAG 模式 -->
+                <div class="activity-item" :class="{ active: currentView === 'rag' }" @click="currentView = 'rag'"
+                    title="RAG 知识库">
+                    <el-icon><Data-Line /></el-icon>
+                </div>
+                <!-- 设置 (推到底部) -->
+                <div style="margin-top: auto;"></div>
+                <div class="activity-item" :class="{ active: currentView === 'settings' }"
+                    @click="currentView = 'settings'" title="设置">
+                    <el-icon>
+                        <Setting />
+                    </el-icon>
+                </div>
+            </div>
+
+            <!-- B. [中间] Sidebar (根据 Activity 变化) -->
+            <div class="sidebar">
+
+                <!-- 场景 1: 翻译模式侧边栏 -->
+                <div v-if="currentView === 'translate'" style="display: flex; flex-direction: column; height: 100%;">
+                    <div class="sidebar-header">
+                        <span>File Explorer</span>
+                        <el-icon style="cursor: pointer">
+                            <Plus />
                         </el-icon>
-                        <span class="tab-label">Original.pdf</span>
-                        <span class="lang-badge">EN</span>
-                        <div class="tab-close"><el-icon>
-                                <Close />
-                            </el-icon></div>
+                    </div>
+
+                    <!-- 拖拽上传区 -->
+                    <div style="padding: 10px;">
+                        <div
+                            style="border: 1px dashed var(--border-color); border-radius: 4px; padding: 20px; text-align: center; cursor: pointer;">
+                            <span style="font-size: 12px; color: var(--text-secondary)">拖拽文件或点击上传</span>
+                        </div>
+                    </div>
+
+                    <!-- 文件树 -->
+                    <div style="flex: 1; overflow-y: auto;">
+                        <div class="file-tree-item active"><el-icon>
+                                <Document />
+                            </el-icon> Docling_Tech_Report.pdf</div>
+                        <div class="file-tree-item"><el-icon>
+                                <Document />
+                            </el-icon> Attention_Need.pdf</div>
                     </div>
                 </div>
 
-                <div class="editor-content">
-                    <h1>Attention Is All You Need</h1>
-                    <div style="color: var(--text-secondary); font-size: 0.9em; margin-bottom: 20px;">Ashish Vaswani,
-                        Noam Shazeer, Google Brain</div>
-
-                    <h2>Abstract</h2>
-                    <p>The dominant sequence transduction models are based on complex recurrent or convolutional neural
-                        networks that include an encoder and a decoder.</p>
-
-                    <p class="active-paragraph">We propose a new simple network architecture, the
-                        <strong>Transformer</strong>, based solely on attention mechanisms, dispensing with recurrence
-                        and convolutions entirely.
-                    </p>
-
-                    <blockquote>
-                        Experiments on two machine translation tasks show these models to be superior in quality while
-                        being more parallelizable and requiring significantly less time to train.
-                    </blockquote>
-
-                    <h2>3 Model Architecture</h2>
-                    <p>Most competitive neural sequence transduction models have an encoder-decoder structure.</p>
-
-                    <pre>class Transformer(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.encoder = Encoder()
-        self.decoder = Decoder()</pre>
+                <!-- 场景 2: RAG 模式侧边栏 -->
+                <div v-if="currentView === 'rag'" style="display: flex; flex-direction: column; height: 100%;">
+                    <div class="sidebar-header">
+                        <span>Knowledge Sources</span>
+                        <el-icon style="cursor: pointer">
+                            <Refresh />
+                        </el-icon>
+                    </div>
+                    <div style="flex: 1; overflow-y: auto; padding-top: 5px;">
+                        <div class="file-tree-item"><el-icon>
+                                <Collection />
+                            </el-icon> Wikipedia_Dump.csv</div>
+                        <div class="file-tree-item"><el-icon>
+                                <Collection />
+                            </el-icon> Company_Manual.docx</div>
+                    </div>
                 </div>
+
             </div>
 
-            <!-- 右侧：译文 -->
-            <div class="split-pane pane-trans">
-                <div class="tabs-bar">
-                    <div class="tab active">
-                        <el-icon class="tab-icon" color="#b37feb"><Edit-Pen /></el-icon>
-                        <span class="tab-label">Translation Preview.md</span>
-                        <span class="lang-badge">ZH</span>
-                        <div class="tab-close"><el-icon>
+            <!-- C. [右侧] 主编辑器区 -->
+            <div class="main-content">
+
+                <!-- 视图 1: 翻译界面 -->
+                <template v-if="currentView === 'translate'">
+                    <!-- Tab 栏 -->
+                    <div class="tabs-header">
+                        <div class="tab-item active">
+                            <el-icon>
+                                <Document />
+                            </el-icon> Docling_Tech_Report.pdf
+                            <el-icon style="margin-left: 6px; font-size: 12px">
                                 <Close />
-                            </el-icon></div>
+                            </el-icon>
+                        </div>
+
+                        <!-- [NEW] 位于最右侧的工具按钮 -->
+                        <div class="tabs-actions">
+                            <el-tooltip content="同步滚动 (Sync Scroll)" placement="bottom">
+                                <el-button :type="syncEnabled ? 'primary' : ''" link
+                                    @click="syncEnabled = !syncEnabled">
+                                    <el-icon :style="syncEnabled ? 'font-weight: bold' : ''">
+                                        <Link />
+                                    </el-icon>
+                                </el-button>
+                            </el-tooltip>
+                        </div>
                     </div>
-                </div>
 
-                <div class="editor-content">
-                    <h1>注意力机制就是你所需要的一切</h1>
-                    <div style="color: var(--text-secondary); font-size: 0.9em; margin-bottom: 20px;">Ashish Vaswani 等 /
-                        谷歌大脑</div>
+                    <!-- 分栏内容 -->
+                    <div class="split-view">
+                        <!-- 原文 -->
+                        <div class="pane pane-en">
+                            <h1>Docling Technical Report</h1>
+                            <p><strong>Version 1.0</strong></p>
+                            <p>Christoph Auer, Maksym Lysak, Ahmed Nassar...</p>
+                            <p><strong>Abstract:</strong> This paper introduces Docling, a novel document processing
+                                engine.</p>
+                        </div>
+                        <!-- 译文 -->
+                        <div class="pane pane-zh">
+                            <h1>Docling 技术报告</h1>
+                            <p><strong>版本 1.0</strong></p>
+                            <p>编写者：Christoph Auer、Maksym Lysak...</p>
+                            <p><strong>摘要：</strong> 本文介绍了 Docling，这是一种新颖的文档处理引擎。</p>
+                        </div>
+                    </div>
+                </template>
 
-                    <h2>摘要</h2>
-                    <p>目前主流的序列转导模型主要基于复杂的循环神经网络（RNN）或卷积神经网络（CNN），其中包括一个编码器和一个解码器。</p>
+                <!-- 视图 2: RAG 界面 -->
+                <template v-if="currentView === 'rag'">
+                    <div class="rag-view">
+                        <!-- [NEW] RAG 状态指示器 (内容区右上角) -->
+                        <div class="rag-status-indicator">
+                            <div class="status-dot"></div>
+                            <span>Service Ready</span>
+                        </div>
 
-                    <p class="active-paragraph">我们提出了一种新的简单网络架构——<strong>Transformer</strong>，它完全基于注意力机制，彻底摒弃了循环和卷积结构。
-                    </p>
+                        <h2>RAG Playground</h2>
+                        <p style="color: var(--text-secondary)">在这里调试你的向量检索效果...</p>
 
-                    <blockquote>
-                        在两个机器翻译任务上的实验表明，这些模型在质量上更具优势，同时具有更好的并行性，并且训练所需的时间显著减少。
-                    </blockquote>
+                        <div style="margin-top: 20px;">
+                            <el-input type="textarea" :rows="4" placeholder="输入查询语句..." resize="none"></el-input>
+                            <div style="margin-top: 10px;">
+                                <el-button type="primary" icon="Search">Retrieve</el-button>
+                            </div>
+                        </div>
+                    </div>
+                </template>
 
-                    <h2>3 模型架构</h2>
-                    <p>大多数具有竞争力的神经序列转导模型都具有编码器-解码器结构。</p>
-
-                    <pre># Python 伪代码
-class Transformer(nn.Module):
-    def __init__(self):
-        super().__init__()
-        # 编码器
-        self.encoder = Encoder()
-        # 解码器
-        self.decoder = Decoder()</pre>
-                </div>
-
-                <div class="floating-actions">
-                    <el-button type="primary" circle size="large" icon="Download" title="导出 Markdown"></el-button>
-                </div>
             </div>
         </div>
-    </div>
 
-    <!-- 脚本 -->
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <script src="https://unpkg.com/element-plus"></script>
-    <script src="https://unpkg.com/@element-plus/icons-vue"></script>
+    </div>
 
     <script>
         const { createApp, ref } = Vue;
-        const { Document, EditPen, UploadFilled, Close, Download, Moon, Sunny } = ElementPlusIconsVue;
+        const {
+            Sunny, Moon, Minus, Close,
+            DocumentCopy, DataLine, Setting,
+            Plus, Document, Refresh, Collection, Link, Search
+        } = ElementPlusIconsVue;
 
         const app = createApp({
             setup() {
-                // 默认主题控制
                 const isDark = ref(true);
+                const currentView = ref('translate'); // 'translate', 'rag', 'settings'
+                const syncEnabled = ref(true); // 同步滚动状态
 
-                const toggleTheme = (val) => {
-                    const htmlEl = document.documentElement;
-                    if (val) {
-                        htmlEl.classList.add('dark');
-                    } else {
-                        htmlEl.classList.remove('dark');
-                    }
+                const toggleTheme = () => {
+                    isDark.value = !isDark.value;
+                    document.documentElement.classList.toggle('dark');
                 };
 
-                return { isDark, toggleTheme, Moon, Sunny };
+                return {
+                    isDark,
+                    currentView,
+                    syncEnabled,
+                    toggleTheme
+                };
             }
         });
 
-        const icons = { Document, EditPen, UploadFilled, Close, Download, Moon, Sunny };
+        // 注册图标
+        const icons = {
+            Sunny, Moon, Minus, Close,
+            DocumentCopy, DataLine, Setting,
+            Plus, Document, Refresh, Collection, Link, Search
+        };
         for (const [key, component] of Object.entries(icons)) {
             app.component(key, component);
         }

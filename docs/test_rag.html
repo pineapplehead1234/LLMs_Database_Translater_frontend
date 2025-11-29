@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG Knowledge Base - VS Code Style</title>
+
+    <!-- Element Plus & Vue -->
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css" />
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/theme-chalk/dark/css-vars.css">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/element-plus"></script>
+    <script src="https://unpkg.com/@element-plus/icons-vue"></script>
+
+    <style>
+        /* =========================================
+           VS Code 风格配色系统 (复用之前的变量)
+           ========================================= */
+        :root {
+            /* 亮色模式 */
+            --bg-app: #F3F3F3;
+            --bg-sidebar: #F3F3F3;
+            /* 侧边栏略灰 */
+            --bg-editor: #FFFFFF;
+            --bg-header: #F3F3F3;
+            --border-color: #E4E4E4;
+            --text-primary: #333333;
+            --text-secondary: #666666;
+            --item-hover: #E8E8E8;
+            --item-active: #FFFFFF;
+            --accent-color: #007ACC;
+            /* VS Code Blue */
+            --tab-inactive-bg: #ECECEC;
+        }
+
+        html.dark {
+            /* 暗色模式 (VS Code Dark+) */
+            --bg-app: #1E1E1E;
+            --bg-sidebar: #252526;
+            --bg-editor: #1E1E1E;
+            --bg-header: #252526;
+            --border-color: #333333;
+            /* 极深分割线 */
+            --text-primary: #CCCCCC;
+            --text-secondary: #858585;
+            --item-hover: #2A2D2E;
+            --item-active: #37373D;
+            --accent-color: #007ACC;
+            --tab-inactive-bg: #2D2D2D;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            background: var(--bg-app);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #rag-app {
+            display: flex;
+            height: 100%;
+            flex-direction: column;
+        }
+
+        /* 顶部通栏 (模拟 Titlebar + 状态) */
+        .top-bar {
+            height: 35px;
+            background: var(--bg-header);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 15px;
+            font-size: 12px;
+            user-select: none;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #666;
+            transition: all 0.3s;
+        }
+
+        .status-dot.ok {
+            background: #10B981;
+            box-shadow: 0 0 6px rgba(16, 185, 129, 0.4);
+        }
+
+        /* 主布局容器 */
+        .workbench {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* 左侧资源管理器 (Sidebar) */
+        .sidebar {
+            width: 260px;
+            background: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-title {
+            padding: 10px 15px;
+            font-size: 11px;
+            font-weight: bold;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .source-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .source-item {
+            padding: 6px 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            border-left: 3px solid transparent;
+        }
+
+        .source-item:hover {
+            background: var(--item-hover);
+            color: var(--text-primary);
+        }
+
+        .source-item.active {
+            background: var(--item-active);
+            color: var(--text-primary);
+            border-left-color: var(--accent-color);
+        }
+
+        .source-count {
+            margin-left: auto;
+            font-size: 11px;
+            opacity: 0.7;
+            background: rgba(128, 128, 128, 0.2);
+            padding: 1px 5px;
+            border-radius: 10px;
+        }
+
+        /* 右侧编辑器区域 */
+        .editor-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-editor);
+            min-width: 0;
+        }
+
+        /* Tabs */
+        .editor-tabs {
+            display: flex;
+            background: var(--bg-sidebar);
+            border-bottom: 1px solid var(--border-color);
+            height: 36px;
+            align-items: center;
+        }
+
+        .tab-group {
+            display: flex;
+            height: 100%;
+        }
+
+        .tab-status {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            padding-right: 10px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .tab {
+            padding: 0 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            background: var(--tab-inactive-bg);
+            border-right: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            min-width: 120px;
+        }
+
+        .tab.active {
+            background: var(--bg-editor);
+            color: var(--text-primary);
+            border-top: 2px solid var(--accent-color);
+        }
+
+        /* 内容面板 */
+        .panel-content {
+            flex: 1;
+            overflow: hidden;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Playground 布局 */
+        .playground-container {
+            display: flex;
+            height: 100%;
+        }
+
+        .pg-config {
+            width: 300px;
+            padding: 20px;
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow-y: auto;
+        }
+
+        .pg-results {
+            flex: 1;
+            padding: 20px;
+            background: var(--bg-app);
+            overflow-y: auto;
+        }
+
+        .result-card {
+            background: var(--bg-editor);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 16px;
+            margin-bottom: 12px;
+            position: relative;
+        }
+
+        .card-label {
+            font-size: 10px;
+            color: var(--accent-color);
+            text-transform: uppercase;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .text-en {
+            font-family: 'Georgia', serif;
+            font-size: 15px;
+            line-height: 1.5;
+            margin-bottom: 8px;
+        }
+
+        .text-zh {
+            font-family: 'PingFang SC', sans-serif;
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* Data Inspector 表格容器 */
+        .table-container {
+            flex: 1;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="rag-app">
+        <!-- 顶部状态栏 -->
+        <div class="top-bar">
+            <div></div>
+            <div>
+                <!-- 主题切换 -->
+                <el-switch v-model="isDark" inline-prompt :active-icon="Moon" :inactive-icon="Sunny"
+                    @change="toggleTheme" style="margin-right: 10px"></el-switch>
+                <!-- 任务状态 -->
+                <el-tag v-if="taskStatus.running" type="warning" size="small" effect="dark">
+                    <el-icon class="is-loading">
+                        <Loading />
+                    </el-icon> Indexing...
+                </el-tag>
+            </div>
+        </div>
+
+        <div class="workbench">
+            <!-- 左侧：知识库源文件 -->
+            <div class="sidebar">
+                <div class="sidebar-title">
+                    <span>Indexed Sources</span>
+                    <div style="display: flex; gap: 4px;">
+                        <!-- 清空库 -->
+                        <el-tooltip content="Destroy Database" placement="bottom">
+                            <el-button link size="small" icon="Delete" @click="handleDestroy"
+                                style="color: var(--text-secondary)"></el-button>
+                        </el-tooltip>
+                        <!-- 上传文件 -->
+                        <el-tooltip content="Upload New File" placement="bottom">
+                            <el-button link size="small" icon="Plus" @click="dialogVisible = true"
+                                style="color: var(--text-secondary)"></el-button>
+                        </el-tooltip>
+                    </div>
+                </div>
+
+                <div class="source-list">
+                    <!-- 全部项 -->
+                    <div class="source-item" :class="{ active: currentFilter === 'all' }"
+                        @click="currentFilter = 'all'">
+                        <el-icon>
+                            <Menu />
+                        </el-icon> All Records
+                        <span class="source-count">{{ totalVectors }}</span>
+                    </div>
+                    <!-- 模拟文件列表 (由 /index 聚合而来) -->
+                    <div v-for="(file, idx) in sourceList" :key="idx" class="source-item"
+                        :class="{ active: currentFilter === file.path }" @click="currentFilter = file.path">
+                        <el-icon>
+                            <Document />
+                        </el-icon>
+                        <span style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{
+                            getFileName(file.path) }}</span>
+                        <span class="source-count">{{ file.count }}</span>
+                        <!-- 删除源按钮 -->
+                        <el-icon style="margin-left: 4px" @click.stop="deleteSource(file.path)">
+                            <Close />
+                        </el-icon>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧：工作区 -->
+            <div class="editor-area">
+                <!-- Tabs -->
+                <div class="editor-tabs">
+                    <div class="tab-group">
+                        <div class="tab" :class="{ active: activeTab === 'playground' }"
+                            @click="activeTab = 'playground'">
+                            <el-icon>
+                                <Search />
+                            </el-icon> Retrieval Playground
+                        </div>
+                        <div class="tab" :class="{ active: activeTab === 'inspector' }"
+                            @click="activeTab = 'inspector'">
+                            <el-icon>
+                                <List />
+                            </el-icon> Data Inspector
+                        </div>
+                    </div>
+                    <div class="tab-status">
+                        <div class="status-badge">
+                            <span class="status-dot" :class="{ ok: healthOk }"></span>
+                            <span>RAG Service {{ healthOk ? 'Ready' : 'Disconnect' }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 1: Retrieval Playground (检索调试) -->
+                <div class="panel-content" v-show="activeTab === 'playground'">
+                    <div class="playground-container">
+                        <!-- 左栏：输入与参数 -->
+                        <div class="pg-config">
+                            <div>
+                                <div
+                                    style="font-size: 12px; font-weight: bold; margin-bottom: 8px; color: var(--text-secondary);">
+                                    TEST QUERIES</div>
+                                <el-input v-model="searchQuery" type="textarea" :rows="8"
+                                    placeholder="输入问题进行测试，支持多行批量输入..." resize="none"></el-input>
+                            </div>
+
+                            <div>
+                                <div
+                                    style="font-size: 12px; font-weight: bold; margin-bottom: 8px; color: var(--text-secondary);">
+                                    PARAMETERS</div>
+                                <el-form label-position="top" size="small">
+                                    <el-form-item label="Top K (条数)">
+                                        <el-slider v-model="params.topk" :min="1" :max="20" show-input></el-slider>
+                                    </el-form-item>
+                                    <el-form-item label="Threshold (最大距离)">
+                                        <el-slider v-model="params.max_score" :min="0" :max="200"></el-slider>
+                                    </el-form-item>
+                                    <el-form-item label="MMR Diversity (多样性)">
+                                        <el-slider v-model="params.lambda_mmr" :step="0.1" :min="0"
+                                            :max="1"></el-slider>
+                                    </el-form-item>
+                                </el-form>
+                            </div>
+
+                            <el-button type="primary" icon="VideoPlay" @click="executeRerank" :loading="searching">Run
+                                Retrieval</el-button>
+                        </div>
+
+                        <!-- 右栏：结果展示 -->
+                        <div class="pg-results">
+                            <div v-if="results.length === 0"
+                                style="text-align: center; color: var(--text-secondary); margin-top: 40px;">
+                                <el-icon size="40" style="margin-bottom: 10px">
+                                    <Search />
+                                </el-icon>
+                                <p>Results will appear here...</p>
+                            </div>
+
+                            <div v-for="(item, index) in results" :key="index">
+                                <!-- 显示这是第几个 Query 的结果 -->
+                                <div
+                                    style="font-size: 12px; color: var(--accent-color); margin-bottom: 8px; border-bottom: 1px solid var(--border-color); padding-bottom: 4px;">
+                                    Query: {{ item.query }}
+                                </div>
+
+                                <!-- 对应的原文和译文 -->
+                                <div class="result-card">
+                                    <div class="card-label">Original Text</div>
+                                    <div class="text-en">{{ item.original }}</div>
+                                    <div class="card-label" style="margin-top: 12px;">Reference Translation</div>
+                                    <div class="text-zh">{{ item.translated }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Data Inspector (数据浏览) -->
+                <div class="panel-content" v-show="activeTab === 'inspector'">
+                    <div class="table-container">
+                        <!-- 工具栏：仅保留刷新，去掉了查询框 -->
+                        <div style="margin-bottom: 10px; display: flex; justify-content: flex-end;">
+                            <el-tooltip content="Reload Data" placement="left">
+                                <el-button circle icon="Refresh" size="small" @click="loadIndexData"></el-button>
+                            </el-tooltip>
+                        </div>
+
+                        <!-- 数据表格 -->
+                        <el-table :data="filteredTableData" style="width: 100%; height: 100%;" size="small" border
+                            :header-cell-style="{background: 'var(--bg-sidebar)', color: 'var(--text-secondary)'}">
+                            <el-table-column prop="seq" label="#" width="60" align="center"></el-table-column>
+                            <el-table-column prop="metadata.english" label="English Segment" min-width="250"
+                                show-overflow-tooltip>
+                                <template #default="scope">
+                                    <span style="font-family: 'Georgia', serif;">{{ scope.row.metadata.english }}</span>
+                                </template>
+                            </el-table-column>
+                            <el-table-column prop="metadata.chinese" label="Chinese Translation" min-width="250"
+                                show-overflow-tooltip>
+                                <template #default="scope">
+                                    <span
+                                        style="font-family: 'PingFang SC', sans-serif; color: var(--text-secondary);">{{
+                                        scope.row.metadata.chinese }}</span>
+                                </template>
+                            </el-table-column>
+                            <el-table-column prop="metadata.source" label="Source File" width="180"
+                                show-overflow-tooltip>
+                                <template #default="scope">
+                                    {{ getFileName(scope.row.metadata.source) }}
+                                </template>
+                            </el-table-column>
+                            <el-table-column label="Action" width="70" align="center">
+                                <template #default="scope">
+                                    <el-button type="danger" link icon="Delete" size="small"
+                                        @click="deleteVector(scope.row.seq)"></el-button>
+                                </template>
+                            </el-table-column>
+                        </el-table>
+
+                        <!-- 简单分页 -->
+                        <div style="margin-top: 10px; text-align: right;">
+                            <el-pagination small background layout="total, prev, pager, next"
+                                :total="filteredTableData.length" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 上传弹窗 -->
+        <el-dialog v-model="dialogVisible" title="Add Documents" width="400px">
+            <el-upload class="upload-demo" drag action="#" :auto-upload="false">
+                <el-icon class="el-icon--upload"><upload-filled /></el-icon>
+                <div class="el-upload__text">Drop file here or <em>click to upload</em></div>
+            </el-upload>
+            <template #footer>
+                <el-button @click="dialogVisible = false">Cancel</el-button>
+                <el-button type="primary" @click="startUpload">Upload & Build</el-button>
+            </template>
+        </el-dialog>
+
+    </div>
+
+    <script>
+        const { createApp, ref, computed } = Vue;
+        const { Sunny, Moon, Loading, Search, List, Document, Menu, Close, Delete, Refresh, Plus, VideoPlay, UploadFilled } = ElementPlusIconsVue;
+
+        const app = createApp({
+            setup() {
+                // --- 状态变量 ---
+                const isDark = ref(true);
+                const activeTab = ref('playground');
+                const healthOk = ref(true);
+                const dialogVisible = ref(false);
+                const searching = ref(false);
+                const taskStatus = ref({ running: false });
+
+                // --- 数据变量 ---
+                // 侧边栏文件源列表 (Mock 数据: 真实场景需从 /index 接口聚合 metadata.source)
+                const sourceList = ref([
+                    { path: 'C:\\Docs\\nejm_train.csv', count: 5400 },
+                    { path: '/uploads/manual_v2.docx', count: 1200 }
+                ]);
+                const totalVectors = computed(() => sourceList.value.reduce((acc, cur) => acc + cur.count, 0));
+                const currentFilter = ref('all'); // 当前选中的文件筛选
+
+                // Playground 相关
+                const searchQuery = ref('车辆质保期多长？\nHow to contact support?');
+                const params = ref({ topk: 1, max_score: 100, lambda_mmr: 0.7 });
+                const results = ref([]); // 存放检索结果
+
+                // Inspector 相关
+                // Mock 数据: 对应 /index?metadata=true 返回的 items
+                const rawIndexData = ref([
+                    { seq: 1, metadata: { english: "The vehicle enjoys a 5-year warranty.", chinese: "整车质保 5 年。", source: "C:\\Docs\\nejm_train.csv" } },
+                    { seq: 2, metadata: { english: "Check engine light indicates a fault.", chinese: "检查引擎灯亮起表示有故障。", source: "/uploads/manual_v2.docx" } },
+                    { seq: 3, metadata: { english: "Contact us via 400-800-1234.", chinese: "请通过 400-800-1234 联系我们。", source: "/uploads/manual_v2.docx" } },
+                ]);
+
+                // --- 计算属性 ---
+
+                // 数据表格筛选逻辑：仅根据侧边栏选中的 Source 过滤
+                const filteredTableData = computed(() => {
+                    if (currentFilter.value === 'all') return rawIndexData.value;
+                    return rawIndexData.value.filter(item => item.metadata.source === currentFilter.value);
+                });
+
+                // --- 方法 ---
+
+                const toggleTheme = () => document.documentElement.classList.toggle('dark');
+
+                // 辅助：从完整路径提取文件名
+                const getFileName = (path) => {
+                    if (!path) return 'Unknown';
+                    return path.split(/[\\/]/).pop();
+                };
+
+                // API 模拟: /rerank
+                const executeRerank = () => {
+                    searching.value = true;
+                    const queries = searchQuery.value.split('\n').filter(q => q.trim());
+
+                    // 模拟 API 请求...
+                    setTimeout(() => {
+                        // API 返回结构模拟：{"original_text": ["en1", "en2"], "translated_text": ["zh1", "zh2"]}
+                        // 假设 topk=1，所以每个 query 对应 1 个结果
+                        const mockResponse = {
+                            original_text: [
+                                "The vehicle enjoys a 5-year warranty...",
+                                "You may reach us via hotline..."
+                            ],
+                            translated_text: [
+                                "整车质保 5 年...",
+                                "可通过热线联系我们..."
+                            ]
+                        };
+
+                        // 前端需要把分离的数组“拉链”式组合起来，方便展示
+                        results.value = queries.map((q, i) => ({
+                            query: q,
+                            original: mockResponse.original_text[i] || "No match",
+                            translated: mockResponse.translated_text[i] || "No match"
+                        }));
+
+                        searching.value = false;
+                    }, 600);
+                };
+
+                // API 模拟: /delete (按 seq 删除)
+                const deleteVector = (seq) => {
+                    if (!confirm(`Delete vector #${seq}?`)) return;
+                    // 调用 POST /delete { indexes: [seq] }
+                    rawIndexData.value = rawIndexData.value.filter(item => item.seq !== seq);
+                    ElementPlus.ElMessage.success(`Vector #${seq} deleted`);
+                };
+
+                // API 模拟: /delete (按 Source 删除)
+                const deleteSource = (path) => {
+                    if (!confirm(`Delete all vectors from ${getFileName(path)}?`)) return;
+                    // 调用 POST /delete { targets: [path], keywords: 'source' }
+                    sourceList.value = sourceList.value.filter(s => s.path !== path);
+                    rawIndexData.value = rawIndexData.value.filter(item => item.metadata.source !== path);
+                    ElementPlus.ElMessage.success(`Source deleted`);
+                };
+
+                const loadIndexData = () => {
+                    ElementPlus.ElMessage.info('Reloading index data...');
+                    // 这里调用 GET /index 刷新数据
+                };
+
+                const startUpload = () => {
+                    dialogVisible.value = false;
+                    taskStatus.value.running = true;
+                    setTimeout(() => {
+                        taskStatus.value.running = false;
+                        ElementPlus.ElMessage.success('Build task started');
+                    }, 1000);
+                };
+
+                const handleDestroy = () => {
+                    if (confirm('DANGER: This will wipe the entire vector store!')) {
+                        // POST /destroy
+                        ElementPlus.ElMessage.warning('Database destroyed');
+                        rawIndexData.value = [];
+                        sourceList.value = [];
+                    }
+                }
+
+                return {
+                    isDark, activeTab, healthOk, dialogVisible, searching, taskStatus,
+                    sourceList, totalVectors, currentFilter,
+                    searchQuery, params, results,
+                    filteredTableData,
+                    toggleTheme, getFileName, executeRerank, deleteVector, deleteSource, loadIndexData, startUpload, handleDestroy,
+                    Sunny, Moon // icons needed for switch
+                };
+            }
+        });
+
+        // 注册图标
+        const icons = { Sunny, Moon, Loading, Search, List, Document, Menu, Close, Delete, Refresh, Plus, VideoPlay, UploadFilled };
+        for (const [key, component] of Object.entries(icons)) {
+            app.component(key, component);
+        }
+
+        app.use(ElementPlus);
+        app.mount('#rag-app');
+    </script>
+
+</body>
+
+</html>
