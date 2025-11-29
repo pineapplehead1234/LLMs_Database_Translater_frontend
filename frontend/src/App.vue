@@ -299,6 +299,24 @@ function handleClose() {
   gap: 6px;
 }
 
+/* 让右上角主题图标只显示图标，不要圆形底色 */
+.window-controls :deep(.el-button.is-circle) {
+  background-color: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  padding: 0;
+  /* 避免按钮太大 */
+  min-width: auto;
+}
+
+/* 悬停 / 聚焦时也保持透明，不要突然出现底色 */
+.window-controls :deep(.el-button.is-circle:hover),
+.window-controls :deep(.el-button.is-circle:focus) {
+  background-color: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+
 /* 模拟 VSCode 窗口按钮的样式 */
 .win-btn {
   width: 22px;
@@ -311,15 +329,18 @@ function handleClose() {
   cursor: pointer;
   color: var(--text-secondary);
   user-select: none;
+  background: transparent;
+  /* ✅ 默认透明，不要方块背景 */
 }
 
 .win-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--window-btn-hover-bg);
+  /* 用你在 base.css 里配置好的变量 */
 }
 
 .win-btn.win-close:hover {
-  background: #c42b1c;
-  color: #fff;
+  background: var(--window-btn-close-hover-bg);
+  color: var(--window-btn-close-hover-color);
 }
 
 /* 主内容区：Activity Bar + Sidebar + Workbench */
@@ -358,7 +379,7 @@ function handleClose() {
 .activity-item.active {
   color: var(--accent-color);
   border-left-color: var(--activity-item-active-border);
-  background-color: rgba(0, 0, 0, 0.04);
+  background-color: var(--activity-item-active-bg);
 }
 
 .activity-item .el-icon {
@@ -430,7 +451,7 @@ function handleClose() {
 
 /* 左侧分隔条（Sidebar 与 Workbench） */
 .resizer {
-  width: 6px;
+  width: 1px;
   background: var(--resizer-bg);
   cursor: col-resize;
   flex-shrink: 0;
@@ -471,7 +492,7 @@ function handleClose() {
 
 /* 内部分隔条（译文区左侧） */
 .inner-resizer {
-  width: 6px;
+  width: 1px;
   background: var(--resizer-bg);
   cursor: col-resize;
   flex-shrink: 0;

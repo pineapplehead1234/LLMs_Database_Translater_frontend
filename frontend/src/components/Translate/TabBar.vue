@@ -55,7 +55,7 @@ function toggleSync() {
     /* 整个标签栏容器的样式 */
     height: 32px;
     /* 固定高度为 40 像素 */
-    border-bottom: 1px solid #2a2a2a;
+    border-bottom: 1px solid var(--tabbar-border-color);
     /* 底部加一条深色边框，与下面内容区分开 */
     display: flex;
     /* 使用 flex 布局，把子元素横向排布 */
@@ -63,40 +63,25 @@ function toggleSync() {
     /* 子元素在垂直方向居中对齐 */
     padding: 0 12px;
     /* 左右各留 12 像素的内边距 */
-    color: #ddd;
-    /* 默认文字颜色为浅灰色 */
+    color: var(--tab-text-color);
 }
 
 .tab-item {
-    /* 单个标签的基础样式 */
     display: flex;
-    /* 使用 flex 让标题和关闭按钮在一行内排列 */
     align-items: center;
-    /* 垂直方向居中 */
     padding: 0 12px;
-    /* 左右内边距 12 像素，上下为 0 */
     height: 100%;
-    /* 高度占满整个 tabbar 的高度 */
     margin-right: 4px;
-    /* 每个标签之间右侧留 4 像素间距 */
-    background: #262626;
-    /* 背景颜色为深灰色 */
+    background: var(--tab-bg);
     border-radius: 4px 4px 0 0;
-    /* 上边两个角是圆角，下边是直角，看起来像标签页 */
     cursor: pointer;
-    /* 鼠标移上来显示为小手，表示可以点击 */
     font-size: 13px;
-    /* 标签文字大小为 13 像素 */
-    color: #aaa;
-    /* 标签文字颜色为偏浅的灰色 */
+    color: var(--tab-text-color);
 }
 
 .tab-item.active {
-    /* 当前激活标签的样式 */
-    background: #1e1e1e;
-    /* 背景颜色略微变深，与下面内容区域融为一体 */
-    color: #fff;
-    /* 激活状态下文字颜色为白色 */
+    background: var(--tab-bg-active);
+    color: var(--tab-text-color-active)
 }
 
 .tab-title {
@@ -145,5 +130,27 @@ function toggleSync() {
     display: flex;
     align-items: center;
 
+}
+
+/* TabBar 右侧的同步开关按钮，只显示图标 */
+.tabbar-right :deep(.el-button.is-circle) {
+    background-color: transparent;
+    border-color: transparent;
+    box-shadow: none;
+    padding: 0;
+    min-width: auto;
+}
+
+/* 只改 TabBar 右侧的同步按钮图标颜色 */
+.tabbar-right :deep(.el-icon) {
+    color: var(--accent-color);
+    /* 或者 var(--el-color-primary)，二者等价 */
+}
+
+.tabbar-right :deep(.el-button.is-circle:hover),
+.tabbar-right :deep(.el-button.is-circle:focus) {
+    background-color: transparent;
+    border-color: transparent;
+    box-shadow: none;
 }
 </style>

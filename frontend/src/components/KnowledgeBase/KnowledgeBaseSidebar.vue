@@ -158,6 +158,23 @@ async function onDeleteFile(file: { source: string; display_name?: string }) {
     border-bottom: 1px solid var(--border-color);
 }
 
+/* 知识库侧边栏顶部的圆形按钮，只保留图标 */
+.kb-toolbar :deep(.el-button.is-circle) {
+    background-color: transparent;
+    border-color: transparent;
+    box-shadow: none;
+    padding: 0;
+    min-width: auto;
+}
+
+/* 悬停/聚焦时也不要出现底色块 */
+.kb-toolbar :deep(.el-button.is-circle:hover),
+.kb-toolbar :deep(.el-button.is-circle:focus) {
+    background-color: transparent;
+    border-color: transparent;
+    box-shadow: none;
+}
+
 /* 文件列表外层占位容器（下一步会放真正的列表） */
 .kb-file-list {
     flex: 1;

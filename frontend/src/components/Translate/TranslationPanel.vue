@@ -1,5 +1,5 @@
 <template>
-  <div class="translated-panel" ref="containerRef">
+  <div class="translated-panel scroll-container" ref="containerRef">
     <!-- 空状态提示 -->
     <div v-if="!hasContent" class="empty-state">
       <div class="empty-icon">📝</div>
@@ -10,7 +10,7 @@
     <div v-else class="segments">
       <div v-for="(text, segmentId) in translatedMarkdown" :key="segmentId" class="segment"
         :data-segment-id="segmentId">
-        <div class="segment-content" v-html="renderWithoutTerms(text)"></div>
+        <div class="segment-content markdown-body" v-html="renderWithoutTerms(text)"></div>
       </div>
     </div>
   </div>
@@ -19,7 +19,7 @@
 <script setup lang="ts">
 import { useTranslationStore } from "@/stores/translationStore";
 import { computed, ref, onMounted, nextTick, watch } from "vue";
-import { marked } from "marked";
+import { renderMarkdown, createBaseRenderer } from "@/utils/markdown";
 import { getCachedImageUrl } from "@/utils/imageCache";
 // 获取Store实例
 const store = useTranslationStore();
@@ -86,7 +86,7 @@ function scrollToOffset(top: number) {
 
 function renderMarkdownWithImages(text: string): string {
 
-  const renderer = new marked.Renderer();
+  const renderer = createBaseRenderer();
 
   renderer.image = ({ href, title, text }: any) => {
     let src = href || "";
@@ -112,7 +112,7 @@ function renderMarkdownWithImages(text: string): string {
     return `<img src="${src}"${altAttr}${titleAttr} />`;
   };
 
-  return marked(text, { renderer }) as string;
+  return renderMarkdown(text, { renderer });
 }
 onMounted(() => {
   nextTick(() => {

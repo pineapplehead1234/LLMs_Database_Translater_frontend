@@ -1,5 +1,5 @@
 <template>
-  <div class="original-panel" ref="containerRef">
+  <div class="original-panel scroll-container" ref="containerRef">
     <div v-if="!hasContent" class="empty-state">
       <div class="empty-icon">📄</div>
       <div class="empty-text">暂无原文内容</div>
@@ -7,8 +7,8 @@
     </div>
     <div v-else class="segments">
       <div v-for="(text, segmentId) in originalMarkdown" :key="segmentId" class="segment" :data-segment-id="segmentId">
-        <div class="segment-content" v-html="renderWithTerms(text, segmentId)" @mouseover="handleMouseOver"
-          @mouseout="handleMouseOut"></div>
+        <div class="segment-content markdown-body" v-html="renderWithTerms(text, segmentId)"
+          @mouseover="handleMouseOver" @mouseout="handleMouseOut"></div>
       </div>
     </div>
     <el-tooltip v-model:visible="tooltipVisible" :content="tooltipContent" placement="top" :virtual-ref="tooltipRef"
@@ -19,7 +19,7 @@
 <script setup lang="ts">
 import { useTranslationStore } from "@/stores/translationStore";
 import { computed, ref, onMounted, nextTick, watch } from "vue";
-import { marked } from "marked";
+import { renderMarkdown, createBaseRenderer } from "@/utils/markdown";
 import { ElTooltip } from "element-plus";
 import { getCachedImageUrl } from "@/utils/imageCache";
 import type { TermAnnotation } from "@/utils/taskCache";
@@ -208,7 +208,10 @@ function highlightTermsInHtml(html: string, terms: TermAnnotation[]): string {
       if (el.classList.contains("term-highlight")) {
         return;
       }
-
+      // 新增：KaTeX 公式节点不递归
+      if (el.classList.contains("katex") || el.classList.contains("katex-display")) {
+        return;
+      }
       // 遍历子节点时要先存一下 nextSibling，避免替换时指针乱掉
       let child = node.firstChild;
       while (child) {
@@ -251,7 +254,7 @@ function renderWithTerms(text: string, segmentId: string) {
   return highlighted;
 }
 function renderMarkdownWithImages(text: string): string {
-  const renderer = new marked.Renderer();
+  const renderer = createBaseRenderer();
 
   renderer.image = ({ href, title, text }: any) => {
     let src = href || "";
@@ -277,7 +280,7 @@ function renderMarkdownWithImages(text: string): string {
     return `<img src="${src}"${altAttr}${titleAttr} />`;
   };
 
-  return marked(text, { renderer }) as string;
+  return renderMarkdown(text, { renderer });
 }
 
 function handleMouseOver(event: MouseEvent) {

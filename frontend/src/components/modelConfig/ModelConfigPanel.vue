@@ -1,5 +1,5 @@
 <template>
-    <div class="model-config-panel">
+    <div class="model-config-panel scroll-container ">
 
         <!-- 如果没有选中的模型 -->
         <div v-if="!selectedModel" class="empty-state">
@@ -128,8 +128,7 @@ const store = useModelConfigStore();
 const selectedModel = computed(() => store.selectedModel);
 
 // 用于表单编辑的本地副本（深拷贝，避免直接改 store）
-const editableModel = ref<LLMConfig | null>(null);
-
+const editableModel = ref<LLMConfig>({} as LLMConfig);
 // 当前选择的角色（Main / MT / None）
 const role = ref<RoleType>("none");
 
@@ -147,7 +146,7 @@ watch(
     selectedModel,
     (model) => {
         if (!model) {
-            editableModel.value = null;
+            editableModel.value = {} as LLMConfig;
             extraBodyString.value = "";
             jsonError.value = false;
             role.value = "none";
@@ -237,7 +236,6 @@ function handleDelete() {
 <style scoped>
 .model-config-panel {
     padding: 16px 24px;
-    height: 100%;
     box-sizing: border-box;
     color: var(--el-text-color-primary, #dddddd);
 }
@@ -250,7 +248,6 @@ function handleDelete() {
 
 .editor-content {
     flex: 1;
-    overflow-y: auto;
     padding: 24px 8px 24px 0;
     max-width: 900px;
     margin: 0 auto;

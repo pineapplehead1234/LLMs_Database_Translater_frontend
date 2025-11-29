@@ -10,6 +10,13 @@
             </span>
             <el-input v-else v-model="editingName" ref="renameInputRef" size="small" class="node-label"
               @keyup.enter="confirmEdit" @blur="cancelEdit" @keyup.esc="cancelEdit" />
+
+            <!-- 根节点行右侧的“新建文件夹”按钮，VSCode 风格：只显示加号图标、无边框、靠右 -->
+            <el-button v-if="data.id === 'root'" class="new-folder-btn" type="text" @click.stop="startCreate">
+              <el-icon>
+                <Plus />
+              </el-icon>
+            </el-button>
           </span>
 
           <template v-if="data.id !== '__create__'" #dropdown>
@@ -23,8 +30,6 @@
             </el-dropdown-menu>
           </template>
         </el-dropdown>
-        <el-button v-if="data.id === 'root'" class="new-folder-btn" size="small" @click.stop="startCreate"
-          icon="Plus" />
       </template>
     </el-tree>
   </div>
@@ -204,6 +209,12 @@ function onNodeClick(data: FileTreeNode) {
 <style scoped>
 .file-tree {
   padding: 8px;
+  background-color: var(--panel-bg);
+}
+
+/* 树本体背景透明，沿用外层 panel-bg */
+.file-tree :deep(.el-tree) {
+  background-color: transparent;
 }
 
 .toolbar {
@@ -223,6 +234,36 @@ function onNodeClick(data: FileTreeNode) {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* 每一行节点的文字颜色 */
+.file-tree :deep(.el-tree-node__content) {
+  color: var(--text-primary);
+  font-size: 13px;
+}
+
+/* hover 高亮（类似 VSCode 左侧） */
+.file-tree :deep(.el-tree-node__content:hover) {
+  background-color: var(--activity-item-hover-bg);
+  color: var(--accent-color);
+}
+
+/* 当前选中节点（依赖 highlight-current） */
+.file-tree :deep(.el-tree-node.is-current > .el-tree-node__content) {
+  background-color: var(--activity-item-active-bg);
+  color: var(--accent-color);
+}
+
+.node-icon {
+  margin-right: 4px;
+  color: var(--text-secondary);
+  /* 默认图标略浅一点 */
+  flex-shrink: 0;
+}
+
+/* 选中行时，让图标也跟着变色 */
+.file-tree :deep(.el-tree-node.is-current .node-icon) {
+  color: var(--accent-color);
 }
 
 :deep(.el-input__wrapper) {
@@ -247,14 +288,21 @@ function onNodeClick(data: FileTreeNode) {
 }
 
 .new-folder-btn {
-  padding: 4px;
-  width: 24px;
-  height: 24px;
-  border-radius: 4px;
+  padding: 0 4px;
+  min-width: auto;
+  height: 22px;
+  border: none;
+  box-shadow: none;
+  color: var(--text-secondary);
+  margin-left: 4px;
 }
 
-/* 可选：hover 时显示边框 */
 .new-folder-btn:hover {
-  background-color: var(--el-fill-color-light);
+  background-color: transparent;
+  color: var(--accent-color);
+}
+
+.new-folder-btn :deep(.el-icon) {
+  font-size: 14px;
 }
 </style>

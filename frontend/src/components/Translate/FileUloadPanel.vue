@@ -1,55 +1,52 @@
 <template>
-  <!-- 控制区：模式 + 保存到 -->
-  <div class="controls">
-    <!-- 模式：按钮式单选 -->
-    <el-radio-group v-model="strategy" size="default" class="mode-group">
-      <el-radio-button value="normal">标准</el-radio-button>
-      <el-radio-button value="fast">极速</el-radio-button>
-      <el-radio-button value="thinking">精准</el-radio-button>
-    </el-radio-group>
+  <div class="upload-card">
+    <!-- 控制区：模式 + 保存到 -->
+    <div class="controls">
+      <!-- 模式：按钮式单选 -->
+      <el-radio-group v-model="strategy" size="default" class="mode-group">
+        <el-radio-button value="normal">标准</el-radio-button>
+        <el-radio-button value="fast">极速</el-radio-button>
+        <el-radio-button value="thinking">精准</el-radio-button>
+      </el-radio-group>
 
-    <!-- 保存到：按钮 + 弹出树 -->
-    <el-popover placement="bottom-start" width="260" v-model:visible="folderPickerVisible" :teleported="false">
-      <template #reference>
-        <el-button size="small" class="folder-trigger" @click="folderPickerVisible = true">
-          <el-icon style="margin-right: 6px">
-            <Folder />
-          </el-icon>
-          保存到：{{ selectedFolderLabel }}
-          <el-icon style="margin-left: 6px">
-            <ArrowDown />
-          </el-icon>
-        </el-button>
-      </template>
+      <!-- 保存到：弹出树 -->
+      <el-popover placement="bottom-start" width="260" v-model:visible="folderPickerVisible" :teleported="false">
+        <template #reference>
+          <el-button size="small" class="folder-trigger" @click="folderPickerVisible = true">
+            <el-icon style="margin-right: 6px">
+              <Folder />
+            </el-icon>
+            保存到：{{ selectedFolderLabel }}
+            <el-icon style="margin-left: 6px">
+              <ArrowDown />
+            </el-icon>
+          </el-button>
+        </template>
 
-      <div style="max-height: 240px; overflow: auto; padding-right: 4px">
-        <el-tree :data="folderTree" node-key="id" default-expand-all highlight-current :expand-on-click-node="false"
-          @current-change="onSelectFolder" />
-      </div>
-    </el-popover>
-  </div>
-
-  <el-upload class="upload-area" drag multiple :auto-upload="false" :file-list="elFilelist" :on-change="onElChange"
-    :on-remove="onElRemove" :show-file-list="false" accept=".pdf,.docx,.md" :disabled="kbStore.isUpdating">
-    <div class="upload-text">拖拽文件到这里或点击上传</div>
-    <template #tip>
-      <div class="el-upload__tip">支持 .pdf / .docx / .md</div>
-    </template>
-  </el-upload>
-
-  <el-scrollbar v-if="filesWithStatus.length" class="file-list">
-    <div class="file-row" v-for="fileItem in filesWithStatus" :key="fileItem.file.name + fileItem.file.size">
-      <div class="file-name">📄 {{ fileItem.file.name }}</div>
-      <el-tag size="small" :type="getStatusType(fileItem.status)" class="file-status">
-        {{ getStatusText(fileItem.status) }}
-      </el-tag>
+        <div class="folder-tree-popover" style="max-height: 240px; overflow: auto; padding-right: 4px">
+          <el-tree :data="folderTree" node-key="id" default-expand-all highlight-current :expand-on-click-node="false"
+            @current-change="onSelectFolder" :props="folderTreeProps" />
+        </div>
+      </el-popover>
     </div>
-  </el-scrollbar>
 
-  <div class="upload-actions" v-if="filesWithStatus.length">
-    <el-button type="primary" @click="upload" :loading="loading" :disabled="loading || filesWithStatus.length === 0">
-      {{ loading ? "上传中..." : "开始上传" }}
-    </el-button>
+    <el-upload class="upload-area" drag multiple :auto-upload="false" :file-list="elFilelist" :on-change="onElChange"
+      :on-remove="onElRemove" :show-file-list="false" accept=".pdf,.docx,.md" :disabled="kbStore.isUpdating">
+      <div class="upload-text">拖拽文件到这里或点击上传</div>
+      <template #tip>
+        <div class="upload-tip">支持 .pdf / .docx / .md</div>
+      </template>
+    </el-upload>
+
+    <el-scrollbar v-if="filesWithStatus.length" class="file-list">
+      <div class="file-row" v-for="fileItem in filesWithStatus" :key="fileItem.file.name + fileItem.file.size">
+        <div class="file-name">📄 {{ fileItem.file.name }}</div>
+        <el-tag size="small" :type="getStatusType(fileItem.status)" class="file-status">
+          {{ getStatusText(fileItem.status) }}
+        </el-tag>
+      </div>
+    </el-scrollbar>
+
   </div>
 </template>
 
@@ -82,6 +79,11 @@ const selectedFolderLabel = ref<string>("根目录");
 
 //限制文件类型
 const ALLOWED_FILE_TYPES = ["pdf", "docx", "md"];
+
+const folderTreeProps = {
+  label: 'name',
+  children: 'children',
+};
 
 //工具函数:判断一个File是否是予许的类型
 function isAllowedFile(file: File): boolean {
@@ -347,24 +349,56 @@ function getDocTypeFromFileName(name: string): "md" | "pdf" | "docx" {
 </script>
 
 <style scoped>
+.upload-card {
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+  border-radius: 8px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  min-height: 0;
+}
+
 /* 拖拽上传区域外观（卡片 + 虚线边框） */
 .upload-area {
+  background-color: var(--upload-area-bg);
   border: 1px dashed var(--upload-area-border);
-  background: var(--upload-area-bg);
-  padding: 8px 0;
+  color: var(--upload-text-color);
+  padding: 12px 16px;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 里面的提示文字也跟随主题颜色 */
+.upload-area :deep(.el-upload-dragger .el-upload__text) {
+  color: var(--upload-text-color);
+}
+
+.upload-area :deep(.el-upload-dragger:hover) {
+  border-color: var(--accent-color);
 }
 
 .upload-text {
-  font-size: 14px;
+  font-size: 13px;
   text-align: center;
-  background: var(--upload-text-bg);
   color: var(--upload-text-color);
+  margin-bottom: 4px;
+}
+
+.upload-tip {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--text-secondary);
 }
 
 .file-row {
   display: flex;
   align-items: center;
   padding: 8px 0;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .file-name {
@@ -380,10 +414,15 @@ function getDocTypeFromFileName(name: string): "md" | "pdf" | "docx" {
 
 .controls {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  margin-top: 8px;
-  margin-bottom: 12px;
+  gap: 8px;
+  margin: 4px 0 12px;
+}
+
+.mode-group {
+  flex: 1 1 auto;
 }
 
 .mode-group :deep(.el-radio-button__inner) {
@@ -392,16 +431,123 @@ function getDocTypeFromFileName(name: string): "md" | "pdf" | "docx" {
 
 .folder-trigger {
   --el-button-bg-color: var(--upload-folder-btn-bg);
+  --el-button-text-color: var(--text-primary);
+  /* 新增：按钮文字颜色 */
+  flex-shrink: 0;
 }
 
 .upload-actions {
   margin-top: 12px;
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
 }
 
 .file-list {
   max-height: 200px;
   margin-top: 12px;
+  scrollbar-gutter: stable;
+}
+
+/* Popover 面板本身：统一走面板背景 */
+:deep(.el-popover) {
+  background-color: var(--panel-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--panel-border);
+}
+
+/* Tree 节点文字颜色 */
+:deep(.el-popover .el-tree-node__content) {
+  color: var(--text-primary);
+}
+
+/* 当前选中的目录：用侧边栏/Activity 的激活色，保证有对比 */
+:deep(.el-popover .el-tree-node.is-current > .el-tree-node__content) {
+  background-color: var(--activity-item-active-bg);
+  color: var(--accent-color);
+}
+
+/* hover 时轻微高亮 */
+:deep(.el-popover .el-tree-node__content:hover) {
+  background-color: var(--activity-item-hover-bg);
+}
+
+/* 真正控制中间白色框的那层 */
+.upload-area :deep(.el-upload-dragger) {
+  background-color: var(--upload-area-bg);
+  border: 1px dashed var(--upload-area-border);
+  color: var(--upload-text-color);
+}
+
+/* 里面的提示文字 */
+.upload-area :deep(.el-upload-dragger .el-upload__text) {
+  color: var(--upload-text-color);
+}
+
+/* hover 边框高亮 */
+.upload-area :deep(.el-upload-dragger:hover) {
+  border-color: var(--accent-color);
+}
+
+.folder-trigger {
+  /* 默认状态：跟上传卡片靠近一点 */
+  --el-button-bg-color: var(--panel-bg);
+  --el-button-text-color: var(--text-primary);
+  --el-button-border-color: var(--panel-border);
+}
+
+/* hover 状态：稍微高亮一下 */
+.folder-trigger:hover {
+  --el-button-bg-color: var(--activity-item-hover-bg);
+  --el-button-text-color: var(--accent-color);
+  --el-button-border-color: var(--activity-item-active-border);
+}
+
+/* Popover 外层：统一面板背景 */
+.upload-card :deep(.el-popover) {
+  background-color: var(--panel-bg) !important;
+  color: var(--text-primary);
+  border: 1px solid var(--panel-border);
+}
+
+/* Popover 内容内部那层容器，也跟着用 panel-bg */
+.upload-card :deep(.el-popover__content) {
+  background-color: var(--panel-bg) !important;
+}
+
+/* Tree 容器如果本身有白色背景，也统一掉 */
+.upload-card :deep(.el-popover .el-tree) {
+  background-color: transparent !important;
+  /* 用外面的 panel-bg 就够了 */
+}
+
+/* Tree 行文字颜色、hover、选中高亮 */
+.upload-card :deep(.el-popover .el-tree-node__content) {
+  color: var(--text-primary);
+}
+
+.upload-card :deep(.el-popover .el-tree-node__content:hover) {
+  background-color: var(--activity-item-hover-bg);
+}
+
+.upload-card :deep(.el-popover .el-tree-node.is-current > .el-tree-node__content) {
+  background-color: var(--activity-item-active-bg);
+  color: var(--accent-color);
+}
+
+/* “保存到”弹窗里的文件夹树文字颜色 */
+.folder-tree-popover :deep(.el-tree-node__label) {
+  color: var(--text-primary);
+  /* 普通状态文字颜色，跟整体主题走 */
+  font-size: 13px;
+}
+
+/* 当前选中节点的文字颜色（高亮一点） */
+.folder-tree-popover :deep(.is-current > .el-tree-node__content .el-tree-node__label) {
+  color: var(--accent-color);
+}
+
+/* 鼠标悬停时，可以稍微变深一点（可选） */
+.folder-tree-popover :deep(.el-tree-node__content:hover .el-tree-node__label) {
+  color: var(--accent-color);
 }
 </style>

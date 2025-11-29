@@ -11,7 +11,7 @@
             </div>
         </div>
 
-        <div class="rag-panel">
+        <div class="rag-panel scroll-container">
             <!-- 当前文件 Tab -->
             <template v-if="activeTab === 'current'">
                 <div v-if="!kbStore.selectedSource" class="sidebar-tip">

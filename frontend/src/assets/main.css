@@ -1,7 +1,24 @@
 @import './base.css';
+@import './base.css';
+
+/* 字号与字体基线 */
+html {
+  font-size: 16px;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Helvetica Neue', 'Noto Sans', 'Microsoft YaHei',
+    Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
+}
 
 /* 根节点铺满视口 */
-html, body, #app { height: 100%; margin: 0; }
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+}
 
 /* 用列式 Flex 作为页面骨架（头-体-尾），并保证最小高度为视口高 */
 #app {
@@ -11,6 +28,17 @@ html, body, #app { height: 100%; margin: 0; }
   /* 不要再限制 max-width/margin 居中，否则会挤压布局 */
 }
 
+:root {
+  /* 间距刻度（以后少写魔法数字） */
+  --space-1: 0.25rem;
+  /* 4px */
+  --space-2: 0.5rem;
+  /* 8px */
+  --space-3: 1rem;
+  /* 16px */
+  --space-4: 1.5rem;
+  /* 24px */
+}
 
 /* 类型A：填满父容器并允许上下滚动 */
 .fill {
@@ -25,5 +53,15 @@ html, body, #app { height: 100%; margin: 0; }
 .full-width {
   width: 100%;
 }
+
 /* 去掉会干扰整体布局的响应式居中和 Grid 规则 */
 /* @media (min-width: 1024px) { ... } 可删除或仅保留你确实需要的页面级样式 */
+
+/* 通用滚动容器：在 Flex 子项里正确滚动，避免布局抖动 */
+.scroll-container {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  overflow: auto;
+  scrollbar-gutter: stable;
+}
