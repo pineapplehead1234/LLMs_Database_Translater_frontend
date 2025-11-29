@@ -1,17 +1,19 @@
 // src/api/config.ts
 
+
 const isDev = import.meta.env.DEV
 const useMock = import.meta.env.VITE_USE_MOCK === 'true'
+const isElectronMode = import.meta.env.VITE_ELECTRON_MODE === 'true'
+const REAL_BACKEND_BASE = import.meta.env.VITE_BACKEND
 
-// 翻译
 const TRANSLATE_MOCK_BASE_URL = import.meta.env.VITE_MOCK_BASE_URL_TRANSLATE
-const TRANSLATE_REAL_BASE_URL = '/apiA'
+const TRANSLATE_REAL_BASE_URL = isElectronMode ? REAL_BACKEND_BASE : '/apiA'
 const BASE_URL = useMock ? TRANSLATE_MOCK_BASE_URL : TRANSLATE_REAL_BASE_URL
 
-// RAG
 const RAG_MOCK_BASE_URL = import.meta.env.VITE_MOCK_BASE_URL_RAG
-const RAG_REAL_BASE_URL = '/rag'
+const RAG_REAL_BASE_URL = isElectronMode ? REAL_BACKEND_BASE : '/rag'
 const RAG_BASE_URL = useMock ? RAG_MOCK_BASE_URL : RAG_REAL_BASE_URL
+
 
 export const IS_MOCK = useMock
 

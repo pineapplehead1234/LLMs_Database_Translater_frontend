@@ -185,12 +185,24 @@ onMounted(() => {
     } else if (activeTab.value === "all") {
         loadGlobalPage(1);
     }
-})
+});
+
 watch(
     () => activeTab.value,
     (val) => {
         if (val === "current" && kbStore.selectedSource) {
             loadCurrentFilePage(1);
+        } else if (val === "all") {
+            loadGlobalPage(1);
+        }
+    }
+);
+
+watch(
+    () => kbStore.totalSeqCount,
+    (total) => {
+        if (activeTab.value === "all" && total > 0 && tableDataAll.value.length === 0) {
+            loadGlobalPage(1);
         }
     }
 );
