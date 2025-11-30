@@ -3,7 +3,12 @@
     <el-tree :data="treeData" node-key="id" :props="treeProps" highlight-current default-expand-all
       @node-click="onNodeClick" @current-change="onCurrentChange">
       <template #default="{ data }">
-        <el-dropdown trigger="contextmenu" @command="onNodeCommand($event, data)">
+        <el-dropdown
+          trigger="contextmenu"
+          @command="onNodeCommand($event, data)"
+          @visible-change="onContextMenuVisibleChange($event, data)"
+          :disabled="contextLocked && activeContextNodeId !== data.id"
+        >
           <span class="custom-node">
             <el-icon class="node-icon">
               <Folder v-if="data.type === 'folder'" />
@@ -56,6 +61,10 @@ const editingName = ref('');
 const createContext = ref<{ parentId: string } | null>(null);
 
 const renameInputRef = ref<HTMLInputElement | null>(null);
+
+// 右键菜单锁：当前有哪个节点打开了右键菜单
+const contextLocked = ref(false);
+const activeContextNodeId = ref<string | null>(null);
 
 onMounted(() => {
   store.initFileTreeFromCache();
@@ -183,6 +192,22 @@ async function onNodeCommand(command: string, data: FileTreeNode) {
     }
   } else if (command === 'rename') {
     startRename(data);
+  }
+}
+
+function onContextMenuVisibleChange(visible: boolean, data: FileTreeNode) {
+  if (visible) {
+    // 第一次打开时锁定当前节点
+    if (!contextLocked.value) {
+      contextLocked.value = true;
+      activeContextNodeId.value = data.id;
+    }
+  } else {
+    // 只在当前节点的菜单关闭时解锁
+    if (activeContextNodeId.value === data.id) {
+      contextLocked.value = false;
+      activeContextNodeId.value = null;
+    }
   }
 }
 
