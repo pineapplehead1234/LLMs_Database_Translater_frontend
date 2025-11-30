@@ -43,18 +43,23 @@
  }
 
  /* 代码块：参考 ui_design_all.html:385-394 的 .code-block */
- .markdown-body .md-code-block {
-     background: var(--code-bg);
-     color: var(--code-text);
-     padding: 12px;
-     border-radius: 6px;
-     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-         "Liberation Mono", "Courier New", monospace;
-     font-size: 12px;
-     margin: 12px 0;
-     border: 1px solid var(--border-color);
-     overflow-x: auto;
- }
+  .markdown-body .md-code-block {
+      background: var(--code-bg);
+      /* 这里建议把 color 去掉，让内部 hljs 自己决定颜色 */
+      /* color: var(--code-text); */
+
+      padding: 12px;
+      border-radius: 6px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+          "Liberation Mono", "Courier New", monospace;
+      font-size: 12px;
+      margin: 12px 0;
+
+      border: 1px solid var(--code-border);
+      /* 再加一圈 box-shadow，当“外轮廓”，在暗色模式很明显 */
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
+      overflow-x: auto;
+  }
 
  /* 避免内层 pre 再加额外 margin 背景 */
  .markdown-body pre {
@@ -77,3 +82,51 @@
  .markdown-body .katex {
      font-size: 1em;
  }
+
+   /* 代码根节点：颜色和背景完全走你的主题 */
+   .markdown-body code.hljs {
+       display: block;
+       color: var(--code-text);
+       background: transparent;
+       /* 背景交给外层 .md-code-block */
+   }
+
+   /* 注释、引用：用次要文字色 */
+   .markdown-body .hljs-comment,
+   .markdown-body .hljs-quote {
+       color: var(--text-secondary);
+       font-style: italic;
+   }
+
+   /* 关键字、类型、meta：用 accent 颜色，醒目但不刺眼 */
+   .markdown-body .hljs-keyword,
+   .markdown-body .hljs-selector-tag,
+   .markdown-body .hljs-meta {
+       color: var(--accent-color);
+       font-weight: 600;
+   }
+
+   /* 字符串、属性名：稍暖一点（你可以换成自己的变量） */
+   .markdown-body .hljs-string,
+   .markdown-body .hljs-title,
+   .markdown-body .hljs-name,
+   .markdown-body .hljs-attr {
+       color: var(--code-token-string);
+       /* 如果想 100% 变量化，可再在 base.css 里加 --code-token-string */
+   }
+
+   /* 数字、常量、symbol：用偏冷一点的蓝 */
+   .markdown-body .hljs-number,
+   .markdown-body .hljs-literal,
+   .markdown-body .hljs-symbol,
+   .markdown-body .hljs-bullet {
+       color: var(--code-token-number);
+       /* 同理可抽成 --code-token-number */
+   }
+
+   /* 函数调用、内置：稍微强调，但不要太跳 */
+   .markdown-body .hljs-function .hljs-title,
+   .markdown-body .hljs-built_in {
+       color: var(--code-text);
+       font-weight: 500;
+   }

@@ -1,6 +1,6 @@
 @import './base.css';
-@import './base.css';
-
+@import './markdown-theme.css';
+        
 /* 字号与字体基线 */
 html {
   font-size: 16px;

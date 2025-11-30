@@ -120,10 +120,11 @@
    /* 当前标签文字 */
 
    /* Markdown 代码块（参考 ui_design_all.html） */
-   --code-bg: #2d3748;
-   /* 深一点的蓝灰 */
-   --code-text: #e2e8f0;
-   /* 浅灰文字 */
+  --code-bg: #f5f7fa;
+    /* 很浅的灰蓝，跟 tab 背景接近 */
+    --code-text: #1f2933;
+    /* 深色文字，提高对比度 */
+--code-border: rgba(15, 23, 42, 0.12);
 
                                                                                                    
     /* 文件状态 tag 颜色（亮色） */                                                              
@@ -139,8 +140,12 @@
     --file-status-error-bg: rgba(245, 108, 108, 0.08);                                           
     --file-status-error-border: var(--kb-status-offline);        
     
+
+        --code-token-string: #f6ad55;
+          --code-token-number: #63b3ed;
                                                                                                   /* 文件状态 tag 颜色（亮色） */
-                                                                                                    --file-status-pending-bg: transparent;
+              --code-border: var(--border-strong);
+                /* 新增 */                                                                                            --file-status-pending-bg: transparent;
                                                                                                     --file-status-pending-border: var(--border-color);
                                                                                                   
                                                                                                     --file-status-processing-bg: rgba(255, 193, 7, 0.08);
@@ -268,6 +273,11 @@
       
         --file-status-error-bg: rgba(245, 108, 108, 0.18);
         --file-status-error-border: var(--kb-status-offline);
+
+            --code-token-string: #fcbf49;
+              --code-token-number: #4fd1c5;
+              --code-border: rgba(255, 255, 255, 0.12);
+                /* 新增 */
  }
 
  /* 纸质阅读主题：偏米黄色、对比度稍柔和 */
@@ -376,4 +386,9 @@
   --el-fill-color: #efe5d2;
   --el-fill-color-light: #f7efe0;
   --el-fill-color-blank: var(--panel-bg);
+
+      --code-token-string: #b7791f;
+        --code-token-number: #2b6cb0;
+              --code-border: #c0b394;
+                /* 新增 */
  }

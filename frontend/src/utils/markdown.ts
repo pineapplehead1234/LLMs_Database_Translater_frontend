@@ -2,12 +2,15 @@
 import { marked, type MarkedOptions } from "marked";
 import markedKatex from "marked-katex-extension";
 import "katex/dist/katex.min.css";
-
+// 新增：代码高亮                                                                              
+import hljs from "highlight.js";
+import { markedHighlight } from "marked-highlight";
 /**
  * 一次性配置 marked 的全局选项：
  * - gfm: GitHub 风格 markdown
  * - breaks: 单行换行也换行
  */
+// 只保留通用选项                                                                              
 marked.setOptions({
     gfm: true,
     breaks: true,
@@ -26,6 +29,13 @@ marked.use(
         // 如果你想允许“非标准”的写法（$周围没空格也解析）
         // 可以额外打开这个选项：
         // nonStandard: true,
+    }),
+    markedHighlight({
+        langPrefix: "hljs language-",
+        highlight(code, lang) {
+            const language = lang && hljs.getLanguage(lang) ? lang : "plaintext";
+            return hljs.highlight(code, { language }).value;
+        },
     }),
 );
 /**
