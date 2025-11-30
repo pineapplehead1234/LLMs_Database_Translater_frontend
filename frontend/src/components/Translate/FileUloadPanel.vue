@@ -38,7 +38,8 @@
       </template>
     </el-upload>
 
-    <el-scrollbar v-if="filesWithStatus.length" class="file-list">
+    <el-scrollbar v-if="filesWithStatus.length" class="file-list" max-height="220" always
+      :view-style="{ paddingRight: '8px', paddingBottom: '4px' }">
       <div class="file-row" v-for="fileItem in filesWithStatus" :key="fileItem.file.name + fileItem.file.size">
         <div class="file-name">{{ fileItem.file.name }}</div>
         <el-tag size="small" :type="getStatusType(fileItem.status)" class="file-status"
@@ -47,6 +48,12 @@
         </el-tag>
       </div>
     </el-scrollbar>
+
+    <div class="upload-actions" v-if="filesWithStatus.length">
+      <el-button size="small" text type="primary" @click="clearUploadRecords">
+        清空记录
+      </el-button>
+    </div>
 
   </div>
 </template>
@@ -63,11 +70,13 @@ import type { FileTreeNode } from "@/stores/translationStore";
 import type { TaskResultData } from "@/utils/taskCache";
 import { prepareTaskImages } from "@/utils/imageCache";
 import { ElMessage } from "element-plus";
+
 import { useKbStore } from "@/stores/kbStore";
 // 文件上传相关
 const elFilelist = ref<UploadFile[]>([]);
 const files = ref<File[]>([]);
 const loading = ref(false);
+
 
 const store = useTranslationStore();
 const kbStore = useKbStore();
@@ -117,7 +126,7 @@ type FileWithStatus = {
 };
 
 const filesWithStatus = ref<FileWithStatus[]>([]);
-
+const uploadQueue = ref<FileWithStatus[]>([]);
 // 文件夹选择处理
 function onSelectFolder(node: FileTreeNode | null) {
   if (!node) {
@@ -129,13 +138,10 @@ function onSelectFolder(node: FileTreeNode | null) {
     folderPickerVisible.value = false;
   }
 }
-
-// 文件变更处理
+// 文件变更处理：维护列表 + 入上传队列                                                         
 function onElChange(_file: UploadFile, fileList: UploadFile[]) {
-  // 先从 UploadFile 列表里拿到原始 File 对象
   const rawFiles = fileList.map((f) => f.raw).filter(Boolean) as File[];
 
-  // 按是否允许拆分
   const allowedFiles: File[] = [];
   const rejectedFiles: File[] = [];
 
@@ -147,40 +153,69 @@ function onElChange(_file: UploadFile, fileList: UploadFile[]) {
     }
   });
 
-  // 更新内部使用的文件列表，只保留合法文件
-  files.value = allowedFiles;
-  filesWithStatus.value = allowedFiles.map((file) => ({
-    file,
-    status: "pending" as FileStatus,
-  }));
+  const prev = filesWithStatus.value;
+  const next: FileWithStatus[] = [];
 
-  // el-upload 自己维护的 fileList 也可以只保留合法文件（更干净）
+  for (const file of allowedFiles) {
+    // 先看列表里是否已经有这个文件（用 name + size 判断）                                     
+    const existing = prev.find(
+      (item) => item.file.name === file.name && item.file.size === file.size,
+    );
+
+    if (existing) {
+      // 已存在：沿用原来的 status / task_id / error                                           
+      next.push(existing);
+    } else {
+      // 新文件：初始化为 pending，并入上传队列                                                
+      const item: FileWithStatus = { file, status: "pending" };
+      next.push(item);
+      uploadQueue.value.push(item);
+    }
+  }
+
+  filesWithStatus.value = next;
+  files.value = allowedFiles;
+
+  // el-upload 内部的 fileList 只保留合法文件                                                  
   elFilelist.value = fileList.filter((item) => {
     const raw = item.raw as File | undefined;
     return raw ? isAllowedFile(raw) : false;
   });
 
-  // 如果有被拒绝的文件，给用户弹一个 warning 提示
   if (rejectedFiles.length > 0) {
     const names = rejectedFiles.map((f) => f.name).join("、");
     ElMessage.warning(`以下文件类型不支持：${names}。仅支持 .pdf / .docx / .md`);
   }
 
-  // 有合法文件并且当前不在上传时，自动开始上传
-  if (filesWithStatus.value.length > 0 && !loading.value) {
-    upload();
+  // 如果当前没在上传，且队列里有待处理文件，就启动队列                                        
+  if (!loading.value && uploadQueue.value.length > 0) {
+    runUploadQueue();
   }
 }
+
+
 
 function onElRemove(_file: UploadFile, fileList: UploadFile[]) {
   elFilelist.value = fileList;
   const rawFiles = fileList.map((f) => f.raw).filter(Boolean) as File[];
+
+  // UI 列表：只保留还在 fileList 里的项                                                       
+  filesWithStatus.value = filesWithStatus.value.filter((item) =>
+    rawFiles.some(
+      (file) => file.name === item.file.name && file.size === item.file.size,
+    ),
+  );
+
+  // 上传队列：还没上传的同样要删掉                                                            
+  uploadQueue.value = uploadQueue.value.filter((item) =>
+    rawFiles.some(
+      (file) => file.name === item.file.name && file.size === item.file.size,
+    ),
+  );
+
   files.value = rawFiles;
-  filesWithStatus.value = rawFiles.map((file) => ({
-    file,
-    status: "pending" as FileStatus,
-  }));
 }
+
 
 // 获取状态文本
 function getStatusText(status: FileStatus): string {
@@ -215,70 +250,82 @@ function getStatusClass(status: FileStatus): string {
   return map[status] ?? "file-status--pending";
 }
 
-// 上传函数
-async function upload() {
-  // 知识库正在更新时禁止上传翻译任务
-  if (kbStore.isUpdating) {
-    ElMessage.warning("知识库正在更新，请稍后再上传翻译文件。");
-    return;
-  }
-  if (!filesWithStatus.value || filesWithStatus.value.length === 0) return;
+
+// 运行上传队列：始终串行，一个一个处理 uploadQueue 里的条目                                   
+
+async function runUploadQueue() {
+  if (loading.value) return;
+  if (!uploadQueue.value.length) return;
+
   loading.value = true;
 
-  for (let i = 0; i < filesWithStatus.value.length; i++) {
-    const fileItem = filesWithStatus.value[i];
+  while (uploadQueue.value.length > 0) {
+    const fileItem = uploadQueue.value[0];
+    if (!fileItem) break;           // 类型收窄，保证不是 undefined                            
 
-    if (!fileItem) continue;
-
-    const file = fileItem.file;
-    fileItem.status = "pending";
-
-    try {
-      const form = new FormData();
-      form.append("file", file);
-      form.append("target_lang", "ch");
-      form.append("strategy", strategy.value);
-      form.append("client_request_id", file.name);
-
-      const uploadRes = await request(API_ENDPOINTS.UPLOAD, {
-        method: "POST",
-        body: form,
-      });
-
-      if (!uploadRes.ok) {
-        throw new Error(`上传失败: ${uploadRes.statusText}`);
-      }
-
-      const uploadData = await uploadRes.json();
-
-      if (uploadData.status !== "success") {
-        fileItem.status = "error";
-        fileItem.error = uploadData.error || "上传失败";
-        continue;
-      }
-
-      const task_id = uploadData.task_id;
-      fileItem.task_id = task_id;
-      fileItem.status = "processing";
-      // 等 1 秒再开始轮询
-      await new Promise(resolve => setTimeout(resolve, 10000));
-
-      await queryTaskProgress(task_id, fileItem);
-    } catch (e) {
-      fileItem.error = "上传失败";
-      const getErrorMessage = (error: unknown): string =>
-        error instanceof Error ? error.message : String(error);
-      fileItem.error = getErrorMessage(e);
-    }
+    await uploadSingle(fileItem);
+    uploadQueue.value.shift();
   }
 
   loading.value = false;
+}
 
-  // 关键：上传完成后清空这几个列表，下次点击“开始上传”只能处理新选择的文件
+// 单个文件上传 + 触发轮询                                                                     
+async function uploadSingle(fileItem: FileWithStatus) {
+  const file = fileItem.file;
+  fileItem.status = "pending";
 
-  filesWithStatus.value = []; // 清空“上传记录列表”（下面那个 v-for 会不再显示任何文件）
-  files.value = []; // 清空原始 File 数组（如果后面有用到，可以保持一致）
-  elFilelist.value = []; // 清空 el-upload 控制的文件列表（相当于“把上传控件重置”）
+  try {
+    const form = new FormData();
+    form.append("file", file);
+    form.append("target_lang", "ch");
+    form.append("strategy", strategy.value);
+    form.append("client_request_id", file.name);
+
+    const uploadRes = await request(API_ENDPOINTS.UPLOAD, {
+      method: "POST",
+      body: form,
+    });
+
+    if (!uploadRes.ok) {
+      throw new Error(`上传失败: ${uploadRes.statusText}`);
+    }
+
+    const uploadData = await uploadRes.json();
+
+    if (uploadData.status !== "success") {
+      fileItem.status = "error";
+      fileItem.error = uploadData.error || "上传失败";
+      return;
+    }
+
+    const task_id = uploadData.task_id;
+    fileItem.task_id = task_id;
+    fileItem.status = "processing";
+
+    // 等一小会儿，再开始轮询                                                                  
+    await new Promise((resolve) => setTimeout(resolve, 10000));
+
+    await queryTaskProgress(task_id, fileItem);
+  } catch (e) {
+    fileItem.status = "error";
+    const getErrorMessage = (error: unknown): string =>
+      error instanceof Error ? error.message : String(error);
+    fileItem.error = getErrorMessage(e);
+  }
+}
+
+// 清空上传记录
+function clearUploadRecords() {
+  if (loading.value) {
+    ElMessage.warning("当前有文件正在上传，请等待后再清空记录");
+    return;
+  }
+
+  filesWithStatus.value = [];
+  uploadQueue.value = [];
+  files.value = [];
+  elFilelist.value = [];
 }
 const MAX_QUERY_RETRY = 5;       // 最多轮询/重连 5 次
 const QUERY_INTERVAL = 2000;     // 每次间隔 2 秒
@@ -427,27 +474,20 @@ function getDocTypeFromFileName(name: string): "md" | "pdf" | "docx" {
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--text-primary);
+  font-size: 10px;
 }
 
 .file-status {
   margin-left: auto;
+  border: none;
+  background-color: transparent;
+  padding: 0;
 }
 
-/* 文件状态标签：根据状态 + 主题变量控制文字颜色 */
-.file-status--pending :deep(.el-tag__content) {
+/* 统一文字样式：只显示普通文本颜色，不再按状态变色 */
+.file-status :deep(.el-tag__content) {
+  padding: 0;
   color: var(--text-secondary);
-}
-
-.file-status--processing :deep(.el-tag__content) {
-  color: var(--accent-color);
-}
-
-.file-status--success :deep(.el-tag__content) {
-  color: var(--kb-status-online);
-}
-
-.file-status--error :deep(.el-tag__content) {
-  color: var(--kb-status-offline);
 }
 
 .controls {
@@ -481,7 +521,6 @@ function getDocTypeFromFileName(name: string): "md" | "pdf" | "docx" {
 }
 
 .file-list {
-  max-height: 200px;
   margin-top: 12px;
   scrollbar-gutter: stable;
 }
