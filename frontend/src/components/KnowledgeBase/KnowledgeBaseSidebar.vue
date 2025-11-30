@@ -122,6 +122,7 @@ async function onDeleteFile(file: { source: string; display_name?: string }) {
         );
         await kbStore.deleteFileBySource(file.source);
         ElMessage.success("文件已删除");
+        kbStore.loadFiles();
     } catch (err) {
         if (err !== "cancel") {
             ElMessage.error("删除文件失败");

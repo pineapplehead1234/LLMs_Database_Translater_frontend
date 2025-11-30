@@ -2,7 +2,6 @@ import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { RAG_ENDPOINTS, IS_MOCK } from "@/api/config";
 import { request } from "@/api/http";
-import { file } from "jszip";
 
 // 直接按后端字段定义
 interface KbFile {

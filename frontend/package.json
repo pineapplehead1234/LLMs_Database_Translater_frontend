@@ -16,7 +16,11 @@
     "win": {
       "target": "nsis",
         "icon": "electron/app.ico" 
-    }
+    },
+          "nsis": {                                                                                  
+        "oneClick": false,                                                      
+        "allowToChangeInstallationDirectory": true                                               
+      }  
   },
   "private": true,
   "type": "module",

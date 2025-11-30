@@ -31,10 +31,10 @@
     </div>
 
     <el-upload class="upload-area" drag multiple :auto-upload="false" :file-list="elFilelist" :on-change="onElChange"
-      :on-remove="onElRemove" :show-file-list="false" accept=".pdf,.docx,.md" :disabled="kbStore.isUpdating">
+      :on-remove="onElRemove" :show-file-list="false" accept=".pdf" :disabled="kbStore.isUpdating">
       <div class="upload-text">拖拽文件到这里或点击上传</div>
       <template #tip>
-        <div class="upload-tip">支持 .pdf / .docx / .md</div>
+        <div class="upload-tip">仅支持 .pdf</div>
       </template>
     </el-upload>
 
