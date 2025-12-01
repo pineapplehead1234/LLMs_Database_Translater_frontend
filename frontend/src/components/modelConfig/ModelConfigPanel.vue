@@ -24,7 +24,7 @@
                         <el-form-item label="Role Type">
                             <el-select v-model="role" placeholder="选择角色">
                                 <el-option label="None (普通模型)" value="none" />
-                                <el-option label="Main (杂货/润色)" value="main" :disabled="mainDisabled" />
+                                <el-option label="Main (主管模型)" value="main" :disabled="mainDisabled" />
                                 <el-option label="MT (初步翻译)" value="MT" :disabled="mtDisabled" />
                             </el-select>
                             <div class="help-text">

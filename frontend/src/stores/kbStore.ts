@@ -18,11 +18,6 @@ export const useKbStore = defineStore("kb", () => {
 
     const files = ref<KbFile[]>([]);
     const selectedSource = ref<string | null>(null); // 用source作为唯一标识
-    //当前选中文件的完整信息
-    const selectedFile = computed<KbFile | null>(() => {
-        if (!selectedSource.value) return null;
-        return files.value.find(f => f.source === selectedSource.value) ?? null;
-    })
     //全部文件的总条数
     const totalSeqCount = computed(() => files.value.reduce((sum, f) => sum + (f.count ?? 0), 0));
     function sleep(ms: number) {
